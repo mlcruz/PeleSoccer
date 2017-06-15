@@ -1,32 +1,25 @@
-#define TERMINALLINHAS  100
+#define TERMINALLINHAS  100 //Tamanho do terminal
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
-#define ESCALA 10 //Escala da tela em relacao ao terminal
+#define PASSOX 0.03125 //tamanho minimo de um passo X no plano 
+#define PASSOY 0.02 //Tamanho minimo de um passo no Y do plano
+#define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
-#define CAMPODEVISAO 40//Campo de visao do jogador
-
+#define CAMPODEVISAO 40 //Campo de visao do jogador
+#define PROPORCAO 2.5
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
 #include <GLFW/glfw3.h> //GLFW para renderiza a janela
 #include <compilaShader.h> //Compila e linka  programas de shaders utilizados
 #include <Windows.h>
-#include <glm\glm.hpp> //Bibliotecas para operacoes com matrizes
+#include <glm\glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#pragma region consts, variaveis e strucs
-
-//Proporcao da do campo de visao em relacao a tela toda
-const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
-const float PASSOX = 0.03125; //tamanho minimo de um passo X no plano 
-const float PASSOY = 0.02*PROPORCAO;//Tamanho minimo de um passo no Y do plano
 
 //Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
 int vetorDeDadosInicial[TERMINALCOLUNAS][TERMINALLINHAS];
 //Matriz que representa a tela
 int vetorDeDadosRecebido[TERMINALCOLUNAS][TERMINALLINHAS];
-//Indica se um vetor foi recem desenhado ou não
+//Indica se um ponto na tela foi recem desenhado ou não
 bool vetorDeDadosDesenhado[TERMINALCOLUNAS][TERMINALLINHAS];
-//Matriz com os dados do campo de visão atual
-int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
 //Vetor que representa a posicao X,Y da bola na matriz
 int posBola[2] = { 40,31 };
 
@@ -44,14 +37,40 @@ struct quadrado
 	};
 };
 
-#pragma endregion
-
-#pragma region Prototipos
-
-
-
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
-GLint inicializaVAOVazia(unsigned int recebeEBO);
+GLint inicializaVAOVazia(unsigned int recebeEBO)
+{
+	unsigned int EBOVAO;//Cria a EBO quadrado para definir como é a leitura dos indices dos vertices
+	glGenBuffers(1, &EBOVAO);//Cria uma EBO e atribui no int o endereço de memoria
+	EBOVAO = recebeEBO;
+	GLuint VBOVAO, VAOVAO; //Cria int para receber endereço da VBO que representa o objeto
+	glGenVertexArrays(1, &VAOVAO);//Gera um vertex array vazio object e salva endereço dele no int espeficiado
+	glGenBuffers(1, &VBOVAO);//Gera um vertex buffer vazio object e salva o endereço dele no int especificado 
+								  //Binda no buffer de VAO o vao especificado, copiando o valor do vao para o buffer(vazio), e alterando a VAO 
+								  //bindada a cada alteração no buffer. Cada VAO guarda uma configuração especifica de como interpretar um VBO
+								  //Especifico e passar para o shader especificado, e todas as alterações e binds a seguir continuam
+								  //na VAO apos ser unbindada
+	glBindVertexArray(VAOVAO);
+
+	//Binda EBO no buffer e EBO(e na VAO) 
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOVAO);
+	//Binda VBO no buffer
+	glBindBuffer(GL_ARRAY_BUFFER, VBOVAO);
+
+	//Define como a VAO vai interpretar os VBOS e EBOS espeficados anteriormente
+	//glvertexattribpointer(indice,size,type,normalized,stride,pointer: Define como interpretar dados de VBOS.
+	//int indice:indice dos dados para ser passado para o shader
+	//int size: numero de componentes por vertice(1,2,3,4)
+	//type: Tipo do dado
+	//Normalizar de -1 a 1?, sim ou não
+	//Tamanho do salto de um vertice para o outro na vbo em bytes
+	//em que posição começa a leitura de cada vertice na VBO
+	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	//Habilita o modo de leitura de dados especificado acima no indice 0 para o GLSL
+	glEnableVertexAttribArray(0);
+	glBindVertexArray(0);
+	return VAOVAO;
+}
 
 //inicializaQuadrado:(GLfloat x, GLfloat ) -> quadrado Quadrado
 //Recebe um X e um Y e retorna uma estrutura quadrado com um array de vertices naquela posição
@@ -113,21 +132,16 @@ void desenhaVazio(Shader shaderUsado, int VAO, GLfloat x, GLfloat y);
 //Altera a posicao da bola para as cordenadas dadas
 void posicionaBola(int x, int y);
 
-#pragma endregion
+
 
 int main()
 {
-	
-#pragma region Inicializa Variaveis
-
 	//Tamanho da janela em pixels, de acordo com o numero de colunas
 	int tamanhoDaLarguraJanela = TERMINALCOLUNAS*ESCALA;
 
-	//Tamanho da janela em pixels, de acordo com o numero de linhas
-	int tamanhoDaAlturaJanela = CAMPODEVISAO*ESCALA;
+	//Tamanho da janela em pixels, de acordo com o numero de colunas
+	int tamanhoDaAlturaJanela = TERMINALLINHAS*ESCALA;
 	
-	int i, j;
-
 	//Inicializa vetor da tela
 	zeraTela(vetorDeDadosRecebido);
 	zeraTela(vetorDeDadosInicial);
@@ -154,19 +168,25 @@ int main()
 	//Define core profile do opengl para ser utilizado
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	int i, j;
+
+    //Inicializa o GLAD
 	//o tipo GLFWwindow é uma estrutura definiao pelo GLFW.
 	//A função glfwCreateWindow recebe int altura, int largura, char[] nome, GLFWmonitor monitor(nulo), GLFWWINDOW share(nulo)
 	//E cria uma estrutura do tipo GLFWwindow com os parametros recebidos, aloca esta na memoria
 	//E devolve o endereço dessa estrutura na memoria
 	//Cria a janela principal, em proporção ao tamanho da matriz de entrada, e guarda o seu local na memoria
-	GLFWwindow* janela = glfwCreateWindow(tamanhoDaLarguraJanela, tamanhoDaAlturaJanela, "PELESOCCER", NULL, NULL);
+	GLFWwindow* janela = glfwCreateWindow(tamanhoDaLarguraJanela, tamanhoDaAlturaJanela / PROPORCAO, "PELESOCCER", NULL, NULL);
 	glfwMakeContextCurrent(janela); //Torna a janela janela a janela atual
+	
+	//Cria um viewPort("janela" do open gl onde acontece a renderização) na posição  
+	//0,0(coordenadas processadas), de tamanho da janela principal 
 	
 	//Inicializa gl3w
 	gl3wInit();
 	
 	//Inicializa janela do opengl do tamanho da janela do GLFW
-	glViewport(0, 0, tamanhoDaLarguraJanela, tamanhoDaAlturaJanela);
+	glViewport(0, 0, tamanhoDaLarguraJanela, tamanhoDaAlturaJanela/PROPORCAO);
 	
 	//Define a cor da janela em RGBT
 	glClearColor(0.32f, 0.61f, 0.002f, 1.0f);
@@ -176,8 +196,9 @@ int main()
 	
 	//Limpa o buffer
 	glfwSwapBuffers(janela);
-	glClear(GL_COLOR_BUFFER_BIT);
-	
+	glClear(GL_COLOR_BUFFER_BIT);	
+
+	//////////////////Vertices////////////////////
 	//Inicializa quadrado em x e y normalizado para servir como EBO padrão.
 	quadrado Bola = inicializaQuadrado(0,0);
 
@@ -191,7 +212,7 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Bola.indices), Bola.indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	/////////////////Shaders,VAOs e VBOs//////////////
+	////////////////Shaders,VAOs e VBOs//////////////
 
 	//Shader padrão só multiplica os vertices pela matriz de transformação padrao
 	//Compila shader padrão, e cria o objeto Shader	
@@ -201,42 +222,37 @@ int main()
 	GLint novaVAO = inicializaVAOVazia(EBOquadrado);
 	//Coloca Vao na lista de vaos da maquina
 	listaDeEnderecosVAO[0] = novaVAO;
-	
+
 	//Cria vetor para receber coordeadas normalizadas da funcao
 	GLfloat XYnormalizado[2];
-#pragma endregion
 
-
-#pragma region Loop Principal do jogo
+	//////////////////////////
+	//Loop principal do jogo//
+	//////////////////////////
 
 	while (!glfwWindowShouldClose(janela)) 
 	{
-		//Passa a janela para a função que reaje a eventos
-		recebeEntrada(janela);
-		//Recebe eventos
-		glfwPollEvents();
-		
-
+		recebeEntrada(janela);//Passa a janela para a função que reaje a eventos
+		glfwPollEvents();//Recebe eventos
 		//Loop de desenho na tela
 		for (i = 0; i < TERMINALCOLUNAS; i++)
 		{
-			for (j = 0; j <CAMPODEVISAO; j++)
+			for (j = 0; j <TERMINALLINHAS; j++)
 			{
-				//Desenha chamando funcao de desenho dependendo do valor na matriz de dados
 				
 				normaliza(i, j, XYnormalizado);
-				desenhaPeloCodigo(vetorDoCampoDeVisao[i][j], shaderPadrao, listaDeEnderecosVAO, XYnormalizado[0],XYnormalizado[1]);
+				desenhaPeloCodigo(vetorDeDadosRecebido[i][j], shaderPadrao, listaDeEnderecosVAO, XYnormalizado[0],XYnormalizado[1]);
 
 			}
 		}
-
-		geraMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
 
 		//Detecta entrada
 		if (glfwGetKey(janela, GLFW_KEY_DOWN) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra baixo
 			posicionaBola(posBola[0], posBola[1] + 1);
+
+
 		}
 		if (glfwGetKey(janela, GLFW_KEY_UP) == GLFW_PRESS) {
 
@@ -258,12 +274,7 @@ int main()
 		glfwSwapBuffers(janela);//Troca buffers
 
 	}
-#pragma endregion
-	
-   
 }
-
-#pragma region Funcoes
 
 void recebeEntrada(GLFWwindow *window){
 //glfwGetKey:
@@ -286,7 +297,7 @@ void normaliza(float originalX, float originalY, GLfloat *retorno)
 
 	GLfloat resultado[2];
 	resultado[0] = 1 - (originalX / (TERMINALCOLUNAS / 2));
-	resultado[1] = 1 - (originalY / (CAMPODEVISAO / 2));
+	resultado[1] = 1 - (originalY / (TERMINALLINHAS / 2));
 	*retorno = resultado[0];
 	*(retorno + 1) = resultado[1];
 
@@ -297,7 +308,7 @@ void deNormaliza(float originalX, float originalY, GLfloat *retorno)
 
 	GLfloat resultado[2];
 	resultado[0] = -(TERMINALCOLUNAS / 2) *(originalX - 1);
-	resultado[1] = -(CAMPODEVISAO/ 2) *(originalY - 1);
+	resultado[1] = -(TERMINALLINHAS/ 2) *(originalY - 1);
 	*retorno = resultado[0];
 	*(retorno + 1) = resultado[1];
 
@@ -372,40 +383,6 @@ void zeraTela(int vetorDaTela[TERMINALCOLUNAS][TERMINALLINHAS])
 	
 	
 
-}
-
-GLint inicializaVAOVazia(unsigned int recebeEBO)
-{
-	unsigned int EBOVAO;//Cria a EBO quadrado para definir como é a leitura dos indices dos vertices
-	glGenBuffers(1, &EBOVAO);//Cria uma EBO e atribui no int o endereço de memoria
-	EBOVAO = recebeEBO;
-	GLuint VBOVAO, VAOVAO; //Cria int para receber endereço da VBO que representa o objeto
-	glGenVertexArrays(1, &VAOVAO);//Gera um vertex array vazio object e salva endereço dele no int espeficiado
-	glGenBuffers(1, &VBOVAO);//Gera um vertex buffer vazio object e salva o endereço dele no int especificado 
-							 //Binda no buffer de VAO o vao especificado, copiando o valor do vao para o buffer(vazio), e alterando a VAO 
-							 //bindada a cada alteração no buffer. Cada VAO guarda uma configuração especifica de como interpretar um VBO
-							 //Especifico e passar para o shader especificado, e todas as alterações e binds a seguir continuam
-							 //na VAO apos ser unbindada
-	glBindVertexArray(VAOVAO);
-
-	//Binda EBO no buffer e EBO(e na VAO) 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOVAO);
-	//Binda VBO no buffer
-	glBindBuffer(GL_ARRAY_BUFFER, VBOVAO);
-
-	//Define como a VAO vai interpretar os VBOS e EBOS espeficados anteriormente
-	//glvertexattribpointer(indice,size,type,normalized,stride,pointer: Define como interpretar dados de VBOS.
-	//int indice:indice dos dados para ser passado para o shader
-	//int size: numero de componentes por vertice(1,2,3,4)
-	//type: Tipo do dado
-	//Normalizar de -1 a 1?, sim ou não
-	//Tamanho do salto de um vertice para o outro na vbo em bytes
-	//em que posição começa a leitura de cada vertice na VBO
-	//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	//Habilita o modo de leitura de dados especificado acima no indice 0 para o GLSL
-	glEnableVertexAttribArray(0);
-	glBindVertexArray(0);
-	return VAOVAO;
 }
 
 void desenhaPeloCodigo(int codigo,Shader shaderUsado,int listaVAOs[NUMVAO],GLfloat x, GLfloat y)
@@ -610,4 +587,3 @@ void posicionaBola(int x, int y)
 
 	}
 }
-#pragma endregion
