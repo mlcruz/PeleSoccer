@@ -1,18 +1,43 @@
 #define TERMINALLINHAS  100
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
-#define ESCALA 15 //Escala da tela em relacao ao terminal
+#define ESCALA 6 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
-#define CAMPODEVISAO 40//Campo de visao do jogador
+#define CAMPODEVISAO 60//Campo de visao do jogador
+#define TAMANHODOTIME 3 //Tamanho maximo de cada time
 
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
-#include <GLFW/glfw3.h> //GLFW para renderiza a janela
-#include <compilaShader.h> //Compila e linka  programas de shaders utilizados
+#include <GLFW/glfw3.h> //GLFW para renderizar a janela
+#include <compilaShader.h> //Compila e linka programas de shaders utilizados
 #include <Windows.h>
-#include <glm\glm.hpp> //Bibliotecas para operacoes com matrizes
+
+//Bibliotecas para operacoes com matrizes
+#include <glm\glm.hpp> 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#pragma region consts, variaveis e strucs
+//LISTA DE COISAS A FAZER:
+//Basico:
+//--
+//1º:Estrutura pra representar e inicializar jogadores e bola:100% 
+//2ºFuncoes para movimentacao de jogadores e time:90%
+//3º:Interacao entre jogadores e a bola
+//4º:Implementar 60 fps
+//5º:Logica de jogo, verificar condicoes de pontuacao e vitoria
+//6º:Leitura de arquivos com formacoes de jogadores
+//7º:Implementar controle do segundo time(facil)
+//8º:Implementar tabela de high scores
+//--
+//Extra:
+//8º:Texturas
+//9º:Som
+//10º:Rescrever a funcão de desenho do jogador para permitir 3 angulos de chute(jogador "3x3" em 1 bloco)
+//11º:Customização dos jogadores(chute mais longo/mais rapido etc)
+//12:º:Oponente controlado por computador
+//Provavelmente nunca:
+//??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
+//??:Implementar 2d isometrico
+
+#pragma region consts, variaveis e strucs globais
 
 //Proporcao da do campo de visao em relacao a tela toda
 const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
@@ -28,7 +53,7 @@ bool vetorDeDadosDesenhado[TERMINALCOLUNAS][TERMINALLINHAS];
 //Matriz com os dados do campo de visão atual
 int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
 //Vetor que representa a posicao X,Y da bola na matriz
-int posBola[2] = { 40,31 };
+int posBola[2] = { 32,50 };
 
 //Limites do campo de visão
 int inicioDoCampoDeVisao=10, fimDoCampoDeVisao=inicioDoCampoDeVisao+CAMPODEVISAO;
@@ -37,7 +62,7 @@ int inicioDoCampoDeVisao=10, fimDoCampoDeVisao=inicioDoCampoDeVisao+CAMPODEVISAO
 const glm::mat4 matrixIdentidade;
 
 //Quadrado basico que representa o tamanho de um caractere no terminal
-struct quadrado
+typedef struct quadrado
 {
 	GLfloat posx, posy; // Define posx, e posy para guardar a posição do item na tela localmente
 	GLfloat vertices[12];//Cria array de vertices
@@ -47,11 +72,27 @@ struct quadrado
 	};
 };
 
+//Estrutura que representa um jogador
+typedef struct jogador 
+{
+	//Posicao x
+	int x;
+	
+	//Posicao y
+	int y;
+	
+	//1:azul, 2:Vermelho
+	int time;
+};
+
+typedef struct bola
+{
+	int x;
+	int y;
+};
 #pragma endregion
 
 #pragma region Prototipos
-
-
 
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
 GLint inicializaVAOVazia(unsigned int recebeEBO);
@@ -65,28 +106,19 @@ quadrado inicializaQuadrado(GLfloat x, GLfloat y);
 //Alguma variavel definida nessa janela 
 void recebeEntrada(GLFWwindow *window);
 
+//Posiciona um jogador especifico na posicao dada e retorna seu estado atualizado
+void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno);
+
+//Inicializa um jogador
+jogador inicializaJogador(int x, int y, int Time);
+
+//Inicializa uma bola
+bola inicializaBola(int x, int y);
+
 //Cria uma matriz altura CAMPODEVISAO e largura do campo, com base na matriz inteira, e atribui no endereo recebido
 //Iniciando no 0,0 da tela, com CAMPODEVISAO/2 para cada lado da tela
 //Retorno precisa ser uma matriz[64][CAMPODEVISAO] obrigatoriamente
-void geraMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO]);
-
-void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
-{
-
-	int matrizDeRetorno[TERMINALCOLUNAS][CAMPODEVISAO];
-	int i, j;
-	for (i = 0; i < TERMINALCOLUNAS; i++)
-	{
-		for (j = 0; j < CAMPODEVISAO; j++)
-		{
-
-
-			*(*(enderecoDoRetorno + i) + j) = matrizOriginal[i][j+inicioDoCampoDeVisao];
-		}
-	}
-
-
-}
+void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO]);
 
 
 //Prototipo da função que tranforma tamanos em unidades de terminal(64x100) para unidades normalizadas.
@@ -119,6 +151,9 @@ void desenhaVazio(Shader shaderUsado, int VAO, GLfloat x, GLfloat y);
 //Altera a posicao da bola para as cordenadas dadas
 void posicionaBola(int x, int y);
 
+//Move um time inteiro uma distancia X,Y especificada
+void moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno);
+
 #pragma endregion
 
 int main()
@@ -138,18 +173,25 @@ int main()
 	zeraTela(vetorDeDadosRecebido);
 	zeraTela(vetorDeDadosInicial);
 
+	//Inicializa a bola nas coredenadas especificadas;
+	bola BolaPadrao = inicializaBola(32, 49);
 
-	//Preenche a matrix de dados com os dados do campo inicial;
-	vetorDeDadosRecebido[32][50] = 1;
-	vetorDeDadosRecebido[24][60] = 1;
-	vetorDeDadosRecebido[40][60] = 1;
-	vetorDeDadosRecebido[32][40] = 2;
-	vetorDeDadosRecebido[24][30] = 2;
-	vetorDeDadosRecebido[40][30] = 2;
-	vetorDeDadosRecebido[posBola[0]][posBola[1]] = 3;
+	//Cria time 1:
+	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1);
+	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos };
+
+	//Cria time 2:
+	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2);
+	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes};
+
 	
+
 	//Lista de todas as VAOs usadas no programa
 	GLint listaDeEnderecosVAO[NUMVAO];
+
+#pragma endregion
+
+#pragma region Inicializa GLFW e GL3W
 
 	//Inicializa glfw
 	glfwInit();
@@ -171,6 +213,10 @@ int main()
 	//Inicializa gl3w
 	gl3wInit();
 	
+#pragma endregion
+
+#pragma region  Inicializa OPENGL
+
 	//Inicializa janela do opengl do tamanho da janela do GLFW
 	glViewport(0, 0, tamanhoDaLarguraJanela, tamanhoDaAlturaJanela);
 	
@@ -197,6 +243,7 @@ int main()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Bola.indices), Bola.indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+
 	/////////////////Shaders,VAOs e VBOs//////////////
 
 	//Shader padrão só multiplica os vertices pela matriz de transformação padrao
@@ -210,19 +257,21 @@ int main()
 	
 	//Cria vetor para receber coordeadas normalizadas da funcao
 	GLfloat XYnormalizado[2];
+	
 #pragma endregion
-	
-	//atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
-	
 
 #pragma region Loop Principal do jogo
 
 	while (!glfwWindowShouldClose(janela)) 
 	{
+		//Atualiza campo de visao
 		fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
 		atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
+		
+
 		//Passa a janela para a função que reaje a eventos
 		recebeEntrada(janela);
+		
 		//Recebe eventos
 		glfwPollEvents();
 		
@@ -245,7 +294,12 @@ int main()
 		if (glfwGetKey(janela, GLFW_KEY_DOWN) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra baixo
-			posicionaBola(posBola[0], posBola[1] + 1);
+			//posicionaBola(posBola[0], posBola[1] + 1);
+
+			//Atualiza posicao do jogador
+			//posicionaJogador(Carlos.x, Carlos.y + 1, Carlos, &Carlos);
+			moveTime(0, 1, time2, time2);
+
 			if (fimDoCampoDeVisao < 100) {
 				inicioDoCampoDeVisao++;
 			}
@@ -254,23 +308,27 @@ int main()
 
 			//Muda a posicao da bola em 1 pra cima
 
-			posicionaBola(posBola[0], posBola[1] - 1);
+			//posicionaBola(posBola[0], posBola[1] - 1);
 			if (inicioDoCampoDeVisao > 0) {
 				inicioDoCampoDeVisao--;
 			}
+
+			moveTime(0, -1, time2, time2);
 		}
 		if (glfwGetKey(janela, GLFW_KEY_LEFT) == GLFW_PRESS) {
 
-			posicionaBola(posBola[0] + 1, posBola[1]);
+		//	posicionaBola(posBola[0] + 1, posBola[1]);
+			moveTime(1, 0, time2, time2);
 		}
 		if (glfwGetKey(janela, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra baixo
-
-			posicionaBola(posBola[0] - 1, posBola[1]);
+			moveTime(-1, 0, time2, time2);
+			//posicionaBola(posBola[0] - 1, posBola[1]);
 		}
 
-		glfwSwapBuffers(janela);//Troca buffers
+		//Troca buffers
+		glfwSwapBuffers(janela);
 
 	}
 #pragma endregion
@@ -384,8 +442,45 @@ void zeraTela(int vetorDaTela[TERMINALCOLUNAS][TERMINALLINHAS])
 
 	}
 
+	//Cria meio do campo de baixo
+	vetorDaTela[38][50] = 7;
+	vetorDaTela[37][51] = 7;
+	vetorDaTela[36][52] = 7;
+	vetorDaTela[35][53] = 7;
+	vetorDaTela[34][54] = 7;
+	vetorDaTela[33][55] = 7;
+	vetorDaTela[32][56] = 7;
+
+	vetorDaTela[26][50] = 7;
+	vetorDaTela[27][51] = 7;
+	vetorDaTela[28][52] = 7;
+	vetorDaTela[29][53] = 7;
+	vetorDaTela[30][54] = 7;
+	vetorDaTela[31][55] = 7;
+	vetorDaTela[32][56] = 7;
+
+
+
 	
-	
+	//Cria meio de campo de cima
+	vetorDaTela[25][49] = 7;
+	vetorDaTela[26][48] = 7;
+	vetorDaTela[27][47] = 7;
+	vetorDaTela[28][46] = 7;
+	vetorDaTela[29][45] = 7;
+	vetorDaTela[30][44] = 7;
+	vetorDaTela[31][43] = 7;
+	vetorDaTela[32][42] = 7;
+
+
+	vetorDaTela[39][49] = 7;
+	vetorDaTela[38][48] = 7;
+	vetorDaTela[37][47] = 7;
+	vetorDaTela[36][46] = 7;
+	vetorDaTela[35][45] = 7;
+	vetorDaTela[34][44] = 7;
+	vetorDaTela[33][43] = 7;
+	vetorDaTela[32][42] = 7;
 
 }
 
@@ -421,6 +516,18 @@ GLint inicializaVAOVazia(unsigned int recebeEBO)
 	glEnableVertexAttribArray(0);
 	glBindVertexArray(0);
 	return VAOVAO;
+}
+
+bola inicializaBola(int x, int y)
+{
+	bola retorno;
+	retorno.x = x;
+	retorno.y = y;
+
+	posBola[0] = x;
+	posBola[1] = y;
+	vetorDeDadosRecebido[x][y] = 3;
+	return retorno;
 }
 
 void desenhaPeloCodigo(int codigo,Shader shaderUsado,int listaVAOs[NUMVAO],GLfloat x, GLfloat y)
@@ -607,8 +714,9 @@ void desenhaVazio(Shader shaderUsado, int VAO, GLfloat x, GLfloat y) {
 
 }
 
-void geraMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
+void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
 {
+
 	int matrizDeRetorno[TERMINALCOLUNAS][CAMPODEVISAO];
 	int i, j;
 	for (i = 0; i < TERMINALCOLUNAS; i++)
@@ -617,13 +725,47 @@ void geraMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS],
 		{
 
 
-			*(*(enderecoDoRetorno + i) + j) = matrizOriginal[i][j];
+			*(*(enderecoDoRetorno + i) + j) = matrizOriginal[i][j + inicioDoCampoDeVisao];
 		}
 	}
 
 
 }
 
+void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno)
+{
+	//Verifica se é possivel posicionar o jogador no local desejado
+	if (vetorDeDadosRecebido[x][y] == 0 || vetorDeDadosRecebido[x][y] == 7)
+	{
+		//Posicao futura que o elemento vai ser desenhado, marcado como desenhado
+		vetorDeDadosDesenhado[x][y] = 1;
+		//Posicao do elemento atualizado
+		vetorDeDadosRecebido[x][y] = jogadorRecebido.time;
+
+		//Limpa posicao original(antiga) do jogador recebido
+		vetorDeDadosRecebido[jogadorRecebido.x][jogadorRecebido.y] = vetorDeDadosInicial[jogadorRecebido.x][jogadorRecebido.y];
+
+		//Atualiza posição antiga do elemento
+		jogadorRecebido.x = x;
+		jogadorRecebido.y = y;
+
+		//Retorna valor
+		*retorno = jogadorRecebido;
+
+	}
+}
+
+jogador inicializaJogador(int x, int y, int Time)
+{
+
+	jogador retorno;
+	retorno.x = x;
+	retorno.y = y;
+	retorno.time = Time;
+	vetorDeDadosRecebido[x][y] = Time;
+	return retorno;
+
+}
 
 void posicionaBola(int x, int y)
 {
@@ -642,5 +784,22 @@ void posicionaBola(int x, int y)
 		posBola[1] = y;
 
 	}
+}
+
+void moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno)
+{
+	//Cria vetor de retorno
+	jogador timeDeRetorno[TAMANHODOTIME];
+
+	int i;
+
+	//Preenche vetor de retorno com os dados atualizados pela funcao
+	for (i = 0; i < TAMANHODOTIME; i++)
+	{
+
+		posicionaJogador(timeRecebido[i].x + distanciaX, timeRecebido[i].y + distanciaY, timeRecebido[i], &timeRecebido[i]);
+	}
+
+
 }
 #pragma endregion
