@@ -1,40 +1,21 @@
-========================================================================
-    CONSOLE APPLICATION : PeleSoccer Project Overview
-========================================================================
-
-AppWizard has created this PeleSoccer application for you.
-
-This file contains a summary of what you will find in each of the files that
-make up your PeleSoccer application.
-
-
-PeleSoccer.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
-
-PeleSoccer.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
-
-PeleSoccer.cpp
-    This is the main application source file.
-
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
-
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named PeleSoccer.pch and a precompiled types file named StdAfx.obj.
-
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
-
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
-
-/////////////////////////////////////////////////////////////////////////////
+//LISTA DE COISAS A FAZER:
+//Basico:
+//--
+//1º:Estrutura pra representar e inicializar jogadores e bola:100% 
+//2ºFuncoes para movimentacao de jogadores e time:90%
+//3º:Interacao entre jogadores e a bola
+//4º:Implementar 60 fps
+//5º:Logica de jogo, verificar condicoes de pontuacao e vitoria
+//6º:Leitura de arquivos com formacoes de jogadores
+//7º:Implementar controle do segundo time(facil)
+//8º:Implementar tabela de high scores
+//--
+//Extra:
+//8º:Texturas
+//9º:Som
+//10º:Rescrever a funcão de desenho do jogador para permitir 3 angulos de chute(jogador "3x3" em 1 bloco)
+//11º:Customização dos jogadores(chute mais longo/mais rapido etc)
+//12:º:Oponente controlado por computador
+//Provavelmente nunca:
+//??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
+//??:Implementar 2d isometrico
