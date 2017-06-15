@@ -1,6 +1,6 @@
 #define TERMINALLINHAS  100
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
-#define ESCALA 10 //Escala da tela em relacao ao terminal
+#define ESCALA 15 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
 #define CAMPODEVISAO 40//Campo de visao do jogador
 
@@ -29,6 +29,9 @@ bool vetorDeDadosDesenhado[TERMINALCOLUNAS][TERMINALLINHAS];
 int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
 //Vetor que representa a posicao X,Y da bola na matriz
 int posBola[2] = { 40,31 };
+
+//Limites do campo de visão
+int inicioDoCampoDeVisao=10, fimDoCampoDeVisao=inicioDoCampoDeVisao+CAMPODEVISAO;
 
 //Matriz identidade que não modifica o vertice
 const glm::mat4 matrixIdentidade;
@@ -65,21 +68,24 @@ void recebeEntrada(GLFWwindow *window);
 //Cria uma matriz altura CAMPODEVISAO e largura do campo, com base na matriz inteira, e atribui no endereo recebido
 //Iniciando no 0,0 da tela, com CAMPODEVISAO/2 para cada lado da tela
 //Retorno precisa ser uma matriz[64][CAMPODEVISAO] obrigatoriamente
-void geraMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS],int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
+void geraMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO]);
+
+void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
 {
+
 	int matrizDeRetorno[TERMINALCOLUNAS][CAMPODEVISAO];
 	int i, j;
 	for (i = 0; i < TERMINALCOLUNAS; i++)
 	{
 		for (j = 0; j < CAMPODEVISAO; j++)
 		{
-			
-			
-			*(*(enderecoDoRetorno + i) + j) = matrizOriginal[i][j];
+
+
+			*(*(enderecoDoRetorno + i) + j) = matrizOriginal[i][j+inicioDoCampoDeVisao];
 		}
 	}
 
-	
+
 }
 
 
@@ -205,12 +211,16 @@ int main()
 	//Cria vetor para receber coordeadas normalizadas da funcao
 	GLfloat XYnormalizado[2];
 #pragma endregion
-
+	
+	//atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
+	
 
 #pragma region Loop Principal do jogo
 
 	while (!glfwWindowShouldClose(janela)) 
 	{
+		fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
+		atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
 		//Passa a janela para a função que reaje a eventos
 		recebeEntrada(janela);
 		//Recebe eventos
@@ -226,23 +236,28 @@ int main()
 				
 				normaliza(i, j, XYnormalizado);
 				desenhaPeloCodigo(vetorDoCampoDeVisao[i][j], shaderPadrao, listaDeEnderecosVAO, XYnormalizado[0],XYnormalizado[1]);
-
+				
 			}
 		}
 
-		geraMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
-
+		
 		//Detecta entrada
 		if (glfwGetKey(janela, GLFW_KEY_DOWN) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra baixo
 			posicionaBola(posBola[0], posBola[1] + 1);
+			if (fimDoCampoDeVisao < 100) {
+				inicioDoCampoDeVisao++;
+			}
 		}
 		if (glfwGetKey(janela, GLFW_KEY_UP) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra cima
 
 			posicionaBola(posBola[0], posBola[1] - 1);
+			if (inicioDoCampoDeVisao > 0) {
+				inicioDoCampoDeVisao--;
+			}
 		}
 		if (glfwGetKey(janela, GLFW_KEY_LEFT) == GLFW_PRESS) {
 
@@ -417,11 +432,11 @@ void desenhaPeloCodigo(int codigo,Shader shaderUsado,int listaVAOs[NUMVAO],GLflo
 	switch (codigo)
 	{
 	case 0:
-		if (vetorDeDadosDesenhado[(int)XYdenormalizado[0]][(int)XYdenormalizado[1]] == 1)
-		{
+		//if (vetorDeDadosDesenhado[(int)XYdenormalizado[0]][(int)XYdenormalizado[1]] == 1)
+		//{
 			desenhaVazio(shaderUsado, listaVAOs[0], x, y);	
 
-		}
+		//}
 		
 		break;
 	//Se o codigo for 1, desenha um Jogador usando a vao 0 da lista
@@ -591,6 +606,24 @@ void desenhaVazio(Shader shaderUsado, int VAO, GLfloat x, GLfloat y) {
 	
 
 }
+
+void geraMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
+{
+	int matrizDeRetorno[TERMINALCOLUNAS][CAMPODEVISAO];
+	int i, j;
+	for (i = 0; i < TERMINALCOLUNAS; i++)
+	{
+		for (j = 0; j < CAMPODEVISAO; j++)
+		{
+
+
+			*(*(enderecoDoRetorno + i) + j) = matrizOriginal[i][j];
+		}
+	}
+
+
+}
+
 
 void posicionaBola(int x, int y)
 {
