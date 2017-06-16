@@ -36,6 +36,7 @@
 //Provavelmente nunca:
 //??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
 //??:Implementar 2d isometrico
+//??:Usar tipos do opengl
 
 #pragma region consts, variaveis e strucs globais
 
@@ -85,6 +86,7 @@ typedef struct jogador
 	int time;
 };
 
+//Estrutura que representa uma bola
 typedef struct bola
 {
 	int x;
@@ -167,6 +169,7 @@ int main()
 	//Tamanho da janela em pixels, de acordo com o numero de linhas
 	int tamanhoDaAlturaJanela = CAMPODEVISAO*ESCALA;
 	
+	//Contadores
 	int i, j;
 
 	//Inicializa vetor da tela
@@ -184,8 +187,6 @@ int main()
 	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2);
 	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes};
 
-	
-
 	//Lista de todas as VAOs usadas no programa
 	GLint listaDeEnderecosVAO[NUMVAO];
 
@@ -195,10 +196,13 @@ int main()
 
 	//Inicializa glfw
 	glfwInit();
+	double tempoCorrido;
 	//Define versão do opengl para 3+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+
 	//Define versão do opengl para 3+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
 	//Define core profile do opengl para ser utilizado
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -235,10 +239,13 @@ int main()
 
 	//Cria a EBO quadrado para definir como é a leitura dos indices dos vertices
 	unsigned int EBOquadrado;
+
 	//Cria uma EBO e atribui no int o endereço de memoria
 	glGenBuffers(1, &EBOquadrado);
+	
 	//Binda EBO no buffer e EBO(e na VAO) 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOquadrado);
+	
 	//Define indicesDoQuadrado como fonte da EBO
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Bola.indices), Bola.indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -252,6 +259,7 @@ int main()
 	
 	//Cria uma nova VAO sem nenhuma atribuição para como ler os dados
 	GLint novaVAO = inicializaVAOVazia(EBOquadrado);
+	
 	//Coloca Vao na lista de vaos da maquina
 	listaDeEnderecosVAO[0] = novaVAO;
 	
@@ -260,10 +268,14 @@ int main()
 	
 #pragma endregion
 
+
 #pragma region Loop Principal do jogo
 
 	while (!glfwWindowShouldClose(janela)) 
 	{
+		
+		glfwSetTime(0.0);
+
 		//Atualiza campo de visao
 		fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
 		atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
@@ -298,6 +310,8 @@ int main()
 
 			//Atualiza posicao do jogador
 			//posicionaJogador(Carlos.x, Carlos.y + 1, Carlos, &Carlos);
+
+			//Movimenta o time especificado
 			moveTime(0, 1, time2, time2);
 
 			if (fimDoCampoDeVisao < 100) {
@@ -326,6 +340,12 @@ int main()
 			moveTime(-1, 0, time2, time2);
 			//posicionaBola(posBola[0] - 1, posBola[1]);
 		}
+
+
+		//Checa framerate
+		tempoCorrido = glfwGetTime();
+		
+
 
 		//Troca buffers
 		glfwSwapBuffers(janela);
