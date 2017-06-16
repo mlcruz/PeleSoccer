@@ -1,9 +1,10 @@
 #define TERMINALLINHAS  100
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
-#define ESCALA 6 //Escala da tela em relacao ao terminal
+#define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
-#define CAMPODEVISAO 60//Campo de visao do jogador
+#define CAMPODEVISAO 40//Campo de visao do jogador
 #define TAMANHODOTIME 3 //Tamanho maximo de cada time
+#define FRAMERATE 30 //Define FPS
 
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
 #include <GLFW/glfw3.h> //GLFW para renderizar a janela
@@ -21,7 +22,7 @@
 //1º:Estrutura pra representar e inicializar jogadores e bola:100% 
 //2ºFuncoes para movimentacao de jogadores e time:90%
 //3º:Interacao entre jogadores e a bola
-//4º:Implementar 60 fps
+//4º:Implementar 30 fps: 100%
 //5º:Logica de jogo, verificar condicoes de pontuacao e vitoria
 //6º:Leitura de arquivos com formacoes de jogadores
 //7º:Implementar controle do segundo time(facil)
@@ -36,8 +37,9 @@
 //Provavelmente nunca:
 //??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
 //??:Implementar 2d isometrico
+//??:Usar tipos do opengl
 
-#pragma region consts, variaveis e strucs globais
+#pragma region consts, variaveis e structs globais
 
 //Proporcao da do campo de visao em relacao a tela toda
 const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
@@ -85,6 +87,7 @@ typedef struct jogador
 	int time;
 };
 
+//Estrutura que representa uma bola
 typedef struct bola
 {
 	int x;
@@ -101,10 +104,10 @@ GLint inicializaVAOVazia(unsigned int recebeEBO);
 //Recebe um X e um Y e retorna uma estrutura quadrado com um array de vertices naquela posição
 quadrado inicializaQuadrado(GLfloat x, GLfloat y);
 
-//Função para receber as teclas pressionadas pelo usuario
+//Função para receber as teclas pressionadas pelo usuario por callback
 //Recebe um endereço na memoria de uma estrutura do tipo GLFW, e faz alguma coisa dependendo do estado atual de
 //Alguma variavel definida nessa janela 
-void recebeEntrada(GLFWwindow *window);
+void recebeEntrada(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 //Posiciona um jogador especifico na posicao dada e retorna seu estado atualizado
 void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno);
@@ -159,7 +162,7 @@ void moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME
 int main()
 {
 	
-#pragma region Inicializa Variaveis
+	#pragma region Inicializa Variaveis
 
 	//Tamanho da janela em pixels, de acordo com o numero de colunas
 	int tamanhoDaLarguraJanela = TERMINALCOLUNAS*ESCALA;
@@ -167,6 +170,10 @@ int main()
 	//Tamanho da janela em pixels, de acordo com o numero de linhas
 	int tamanhoDaAlturaJanela = CAMPODEVISAO*ESCALA;
 	
+	//Inicializa quadrado em x e y normalizado para servir como EBO padrão.
+	quadrado Bola = inicializaQuadrado(0, 0);
+
+	//Contadores
 	int i, j;
 
 	//Inicializa vetor da tela
@@ -184,21 +191,22 @@ int main()
 	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2);
 	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes};
 
-	
-
 	//Lista de todas as VAOs usadas no programa
 	GLint listaDeEnderecosVAO[NUMVAO];
 
 #pragma endregion
 
-#pragma region Inicializa GLFW e GL3W
+	#pragma region Inicializa GLFW e GL3W
 
 	//Inicializa glfw
 	glfwInit();
+	double tempoCorrido;
 	//Define versão do opengl para 3+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+
 	//Define versão do opengl para 3+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
 	//Define core profile do opengl para ser utilizado
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -210,12 +218,16 @@ int main()
 	GLFWwindow* janela = glfwCreateWindow(tamanhoDaLarguraJanela, tamanhoDaAlturaJanela, "PELESOCCER", NULL, NULL);
 	glfwMakeContextCurrent(janela); //Torna a janela janela a janela atual
 	
+	//Define funcao recebeEntrada como funcao de callback padrao
+	glfwSetKeyCallback(janela, recebeEntrada);
+
+
 	//Inicializa gl3w
 	gl3wInit();
 	
 #pragma endregion
 
-#pragma region  Inicializa OPENGL
+	#pragma region  Inicializa OPENGL
 
 	//Inicializa janela do opengl do tamanho da janela do GLFW
 	glViewport(0, 0, tamanhoDaLarguraJanela, tamanhoDaAlturaJanela);
@@ -229,20 +241,19 @@ int main()
 	//Limpa o buffer
 	glfwSwapBuffers(janela);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
-	//Inicializa quadrado em x e y normalizado para servir como EBO padrão.
-	quadrado Bola = inicializaQuadrado(0,0);
 
 	//Cria a EBO quadrado para definir como é a leitura dos indices dos vertices
 	unsigned int EBOquadrado;
+
 	//Cria uma EBO e atribui no int o endereço de memoria
 	glGenBuffers(1, &EBOquadrado);
+	
 	//Binda EBO no buffer e EBO(e na VAO) 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBOquadrado);
+	
 	//Define indicesDoQuadrado como fonte da EBO
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Bola.indices), Bola.indices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 
 	/////////////////Shaders,VAOs e VBOs//////////////
 
@@ -252,29 +263,31 @@ int main()
 	
 	//Cria uma nova VAO sem nenhuma atribuição para como ler os dados
 	GLint novaVAO = inicializaVAOVazia(EBOquadrado);
+	
 	//Coloca Vao na lista de vaos da maquina
 	listaDeEnderecosVAO[0] = novaVAO;
 	
 	//Cria vetor para receber coordeadas normalizadas da funcao
 	GLfloat XYnormalizado[2];
-	
+
 #pragma endregion
 
-#pragma region Loop Principal do jogo
-
+	#pragma region Loop Principal do jogo
+	
+	//Enquanto a janela não fecha
 	while (!glfwWindowShouldClose(janela)) 
 	{
+		
+		#pragma region Inicializa no Loop
+
+		glfwSetTime(0.0);
+
 		//Atualiza campo de visao
 		fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
 		atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
-		
-
-		//Passa a janela para a função que reaje a eventos
-		recebeEntrada(janela);
-		
-		//Recebe eventos
-		glfwPollEvents();
-		
+#pragma endregion	
+				
+		#pragma region Desenha na Tela
 
 		//Loop de desenho na tela
 		for (i = 0; i < TERMINALCOLUNAS; i++)
@@ -288,8 +301,13 @@ int main()
 				
 			}
 		}
+#pragma endregion
 
+		#pragma region Detecta entrada
 		
+		//Recebe eventos por callback
+		glfwPollEvents();
+
 		//Detecta entrada
 		if (glfwGetKey(janela, GLFW_KEY_DOWN) == GLFW_PRESS) {
 
@@ -298,47 +316,70 @@ int main()
 
 			//Atualiza posicao do jogador
 			//posicionaJogador(Carlos.x, Carlos.y + 1, Carlos, &Carlos);
-			moveTime(0, 1, time2, time2);
 
-			if (fimDoCampoDeVisao < 100) {
-				inicioDoCampoDeVisao++;
-			}
+			//Movimenta o time especificado
+			moveTime(0, 1, time1, time1);
+
 		}
 		if (glfwGetKey(janela, GLFW_KEY_UP) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra cima
 
 			//posicionaBola(posBola[0], posBola[1] - 1);
-			if (inicioDoCampoDeVisao > 0) {
-				inicioDoCampoDeVisao--;
-			}
 
-			moveTime(0, -1, time2, time2);
+			moveTime(0, -1, time1, time1);
 		}
 		if (glfwGetKey(janela, GLFW_KEY_LEFT) == GLFW_PRESS) {
 
 		//	posicionaBola(posBola[0] + 1, posBola[1]);
-			moveTime(1, 0, time2, time2);
+			moveTime(1, 0, time1, time1);
 		}
 		if (glfwGetKey(janela, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 
 			//Muda a posicao da bola em 1 pra baixo
-			moveTime(-1, 0, time2, time2);
+			moveTime(-1, 0, time1, time1);
 			//posicionaBola(posBola[0] - 1, posBola[1]);
 		}
+		if (glfwGetKey(janela, GLFW_KEY_W) == GLFW_PRESS) {
+
+			if (inicioDoCampoDeVisao > 0) {
+				inicioDoCampoDeVisao--;
+			}
+		}
+		if (glfwGetKey(janela, GLFW_KEY_S) == GLFW_PRESS) {
+
+			if (fimDoCampoDeVisao < 100) {
+				inicioDoCampoDeVisao++;
+			}
+		}
+#pragma endregion
+		
+		#pragma region Troca buffers
 
 		//Troca buffers
 		glfwSwapBuffers(janela);
+#pragma endregion
+
+		#pragma region Forca framerate
+		system("@cls||clear");
+		tempoCorrido = glfwGetTime();
+		if (((1.0 / (double)FRAMERATE) - tempoCorrido) > 0)
+		{
+			
+			Sleep((1.0 / (double)FRAMERATE - tempoCorrido)*1000);
+		}
+		printf("Framerate fixada: %lf\n", 1 / glfwGetTime());
+		printf("Framerate original: %lf\n", 1 / tempoCorrido);
+#pragma endregion		
 
 	}
+
 #pragma endregion
-	
-   
 }
 
 #pragma region Funcoes
 
-void recebeEntrada(GLFWwindow *window){
+void recebeEntrada(GLFWwindow *window, int key, int scancode, int action, int mods){
 //glfwGetKey:
 //recebe: GLFWwindow, GLFWKEY(paratro unico para cada tecla que indica o estado atual(PRESS, RELEASE, HOLD...) da tecla	
 //retorna:Bool indicando se a tecla está no estado passado para a função
@@ -349,9 +390,6 @@ void recebeEntrada(GLFWwindow *window){
 		glfwSetWindowShouldClose(window, true);
 		 //Se sim, sai da janela
 	}	
-
-
-
 }
 
 void normaliza(float originalX, float originalY, GLfloat *retorno)
@@ -802,4 +840,5 @@ void moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME
 
 
 }
+
 #pragma endregion
