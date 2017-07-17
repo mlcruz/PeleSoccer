@@ -12,6 +12,9 @@
 #include <Windows.h>
 #include <string.h>
 
+#include <time.h>
+#include <inttypes.h>
+
 //Bibliotecas para operacoes com matrizes
 #include <glm\glm.hpp> 
 #include <glm/gtc/matrix_transform.hpp>
@@ -29,7 +32,6 @@
 //7º:Leitura de arquivos com formacoes de jogadores
 //8º:Implementar controle do segundo time(facil)
 //9º:Implementar tabela de high scores
-
 //--
 //Extra:
 //8º:Texturas
@@ -130,6 +132,11 @@ quadrado inicializaQuadrado(GLfloat x, GLfloat y);
 void recebeEntrada(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 //
+//Prototipo da funcao de callback para redimensionar a janela
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+
+//
 //Posiciona um jogador especifico na posicao dada e retorna seu estado atualizado
 void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno);
 
@@ -206,8 +213,10 @@ int main()
 	
 	#pragma region Inicializa Variaveis
 
-	//A cada quantos "turnos" a bola perde um turno?
+	//A cada quantos "turnos" a bola perde um turno
 	limitadorDeVelocidadeBola = 3;
+
+	int tempoMaxDeJogo = 60;
 
 	//Tamanho da janela em pixels, de acordo com o numero de colunas
 	int tamanhoDaLarguraJanela = TERMINALCOLUNAS*ESCALA;
@@ -221,8 +230,10 @@ int main()
 	//Contadores
 	int i, j;
 	
+	//Tempo atual desde o inicio do jogo
+	int tempoDeJogo;
+
 	//
-	int LimiteXE, limiteXD, limiteYE, limiteYD;
 	//Inicializa vetor da tela
 	zeraTela(vetorDeDadosRecebido);
 	zeraTela(vetorDeDadosInicial);
@@ -248,7 +259,12 @@ int main()
 
 	//Inicializa glfw
 	glfwInit();
+
 	double tempoCorrido;
+	//Variaveis para os relogios
+	clock_t relogioInicial = clock(), relogioAtual;
+	
+	//Tempo limite da partida em segundos
 	//Define versão do opengl para 3+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 
@@ -263,16 +279,22 @@ int main()
 	//E cria uma estrutura do tipo GLFWwindow com os parametros recebidos, aloca esta na memoria
 	//E devolve o endereço dessa estrutura na memoria
 	//Cria a janela principal, em proporção ao tamanho da matriz de entrada, e guarda o seu local na memoria
-	GLFWwindow* janela = glfwCreateWindow(tamanhoDaLarguraJanela, tamanhoDaAlturaJanela, "PELESOCCER", NULL, NULL);
+	GLFWwindow* janela = glfwCreateWindow(tamanhoDaLarguraJanela, tamanhoDaAlturaJanela, "GLSOCCER", NULL, NULL);
 	glfwMakeContextCurrent(janela); //Torna a janela janela a janela atual
-	
-	//Define funcao recebeEntrada como funcao de callback padrao
-	glfwSetKeyCallback(janela, recebeEntrada);
 
+	//define framzebuffer_size_callback como a funcao padrao de callback de redimensionamento
+	glfwSetFramebufferSizeCallback(janela, framebuffer_size_callback);
+
+	//Define funcao recebeEntrada como funcao de callback padrao de entrada
+	glfwSetKeyCallback(janela, recebeEntrada);
 
 	//Inicializa gl3w
 	gl3wInit();
-	
+
+	//Posicao da criacao da janela ao lado do console
+	glfwSetWindowPos(janela, 500, 100);
+
+
 #pragma endregion
 
 	#pragma region  Inicializa OPENGL
@@ -323,6 +345,9 @@ int main()
 	fixaTime(time1,limiteT1);
 	fixaTime(time1, limiteT1);
 	//getchar();
+
+	//Raw timer no comeco do programa
+	unsigned long int rawTime = glfwGetTimerValue();
 
 #pragma endregion
 
@@ -453,7 +478,11 @@ int main()
 		}
 		printf("Framerate fixada: %.2lf\n", 1 / glfwGetTime());
 		printf("Framerate original: %.2lf\n", 1 / tempoCorrido);
+		tempoDeJogo = ((relogioAtual = clock()) - relogioInicial) / 1000;
+		printf("Relogio: %i\nFaltam: %i segundos para o fim do jogo\n", tempoDeJogo,tempoMaxDeJogo-tempoDeJogo);
+		printf("Time Azul %i - %i Time Vermelho\n", placar[1], placar[0]);
 		
+
 #pragma endregion		 
 		
 
@@ -502,7 +531,7 @@ void fixaTime(jogador timeRecebido[TAMANHODOTIME], int *retorno)
 
 	}
 
-	printf("MaiorX:%i MenorX:%i MaiorY:%i MenorY:%i \n idMaiorX:%i idMenorX:%i idMaiorY:%i idMenorY:%i", maiorX, menorX, maiorY, menorY,idMaiorX,idMenorX,idMaiorY,idMenorY);
+	//printf("MaiorX:%i MenorX:%i MaiorY:%i MenorY:%i \n idMaiorX:%i idMenorX:%i idMaiorY:%i idMenorY:%i", maiorX, menorX, maiorY, menorY,idMaiorX,idMenorX,idMaiorY,idMenorY);
 	
 
 	*retorno = idMaiorX;
@@ -725,13 +754,13 @@ void desenhaPeloCodigo(int codigo,Shader shaderUsado,int listaVAOs[NUMVAO],GLflo
 		break;
 	//Se o codigo for 1, desenha um Jogador usando a vao 0 da lista
 	case 1:
-		//Coloca R do RBG como 1, cria jogador(time vermelho)
+		//Coloca R do RGB como 1, cria jogador(time vermelho)
 		corJogador[0] = 0.90f;
 		desenhaJogador(shaderUsado, listaVAOs[0], x ,y,corJogador);
 		break;
 	case 2:
-		//Coloca B do RBG como 1, cria jogador(time azul)
-		corJogador[1] = 0.90f;
+		//Coloca B do RGB como 1, cria jogador(time azul)
+		corJogador[2] = 0.90f;
 		desenhaJogador(shaderUsado, listaVAOs[0], x, y, corJogador);
 		break;
 	case 3:
@@ -1113,7 +1142,6 @@ void atualizaBola(bola *bolaRecebida)
 	}
 
 	//Verifica colisao da bola com o gol
-	
 	//Checa gol de baixo
 	if (vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y+1] == 8 && bolaRecebida->velY > 1)
 	{
@@ -1127,6 +1155,25 @@ void atualizaBola(bola *bolaRecebida)
 		placar[0]++;
 
 	}
+	//Checa gol de cima 
+	if (vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y - 1] == 8 && bolaRecebida->velY < -1)
+	{
+		posicionaBola(bolaRecebida, bolaRecebida->x, bolaRecebida->y + bolaRecebida->velY);
+
+		bolaRecebida->velY = 0;
+
+		//Faz a bola "entrar no gol"
+		vetorDeDadosRecebido[bolaRecebida->x][(bolaRecebida->y) - 2] = 3;
+		vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y] = vetorDeDadosInicial[bolaRecebida->x][bolaRecebida->y];
+		placar[1]++;
+
+	}
+
+
 }
 
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
 #pragma endregion
