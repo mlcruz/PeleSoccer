@@ -3,13 +3,14 @@
 #define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
 #define CAMPODEVISAO 40//Campo de visao do jogador
-#define TAMANHODOTIME 3 //Tamanho maximo de cada time
+#define TAMANHODOTIME 4 //Tamanho maximo de cada time
 #define FRAMERATE 30 //Define FPS
-
+ 
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
 #include <GLFW/glfw3.h> //GLFW para renderizar a janela
 #include <compilaShader.h> //Compila e linka programas de shaders utilizados
 #include <Windows.h>
+#include <string.h>
 
 //Bibliotecas para operacoes com matrizes
 #include <glm\glm.hpp> 
@@ -20,24 +21,25 @@
 //Basico:
 //--
 //1º:Estrutura pra representar e inicializar jogadores e bola:100% 
-//2ºFuncoes para movimentacao de jogadores e time:90%
-//3º:Interacao entre jogadores e a bola
+//2ºFuncoes para movimentacao de jogadores e time:100%
+//3º:Interacao entre jogadores e a bola: 100%
 //4º:Implementar 30 fps: 100%
-//5º:Logica de jogo, verificar condicoes de pontuacao e vitoria
-//6º:Leitura de arquivos com formacoes de jogadores
-//7º:Implementar controle do segundo time(facil)
-//8º:Implementar tabela de high scores
+//5º:Verificar condicoes de pontuacao e vitoria: 100%
+//6º:Implemetnar goleiro
+//7º:Leitura de arquivos com formacoes de jogadores
+//8º:Implementar controle do segundo time(facil)
+//9º:Implementar tabela de high scores
+
 //--
 //Extra:
 //8º:Texturas
 //9º:Som
 //10º:Rescrever a funcão de desenho do jogador para permitir 3 angulos de chute(jogador "3x3" em 1 bloco)
-//11º:Customização dos jogadores(chute mais longo/mais rapido etc)
+//11º:Customização dos jogadores(chute mais longo/mais rapido etc): 80%
 //12:º:Oponente controlado por computador
 //Provavelmente nunca:
 //??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
 //??:Implementar 2d isometrico
-//??:Usar tipos do opengl
 
 #pragma region consts, variaveis e structs globais
 
@@ -57,8 +59,22 @@ int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
 //Vetor que representa a posicao X,Y da bola na matriz
 int posBola[2] = { 32,50 };
 
+//Placar do jogo, time1 eh [0], time2 eh [1]
+int placar[2];
+
+//Conta numero de frames até o momento
+int contadordeframes = 0;
+
+//Guarda quais teclas de movimento foram pressionadas pra movimentacao em diagonal
+//0 direita(X+), 1 esquerda(X-), 2 BAIXO(Y+), 3 cima(Y-);
+bool vetorDeSetas[4] = { 0,0,0,0 };
+
+
 //Limites do campo de visão
 int inicioDoCampoDeVisao=10, fimDoCampoDeVisao=inicioDoCampoDeVisao+CAMPODEVISAO;
+
+//Serve para regurlar a velocidade da atualização da bola em relacao aos jogadores
+int limitadorDeVelocidadeBola;
 
 //Matriz identidade que não modifica o vertice
 const glm::mat4 matrixIdentidade;
@@ -92,11 +108,15 @@ typedef struct bola
 {
 	int x;
 	int y;
+	int velX;
+	int velY;
 };
 #pragma endregion
 
 #pragma region Prototipos
 
+
+//
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
 GLint inicializaVAOVazia(unsigned int recebeEBO);
 
@@ -109,60 +129,85 @@ quadrado inicializaQuadrado(GLfloat x, GLfloat y);
 //Alguma variavel definida nessa janela 
 void recebeEntrada(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+//
 //Posiciona um jogador especifico na posicao dada e retorna seu estado atualizado
 void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno);
 
+//
 //Inicializa um jogador
 jogador inicializaJogador(int x, int y, int Time);
 
+//
 //Inicializa uma bola
-bola inicializaBola(int x, int y);
+bola inicializaBola(int x, int y,int velX,int velY);
 
 //Cria uma matriz altura CAMPODEVISAO e largura do campo, com base na matriz inteira, e atribui no endereo recebido
 //Iniciando no 0,0 da tela, com CAMPODEVISAO/2 para cada lado da tela
 //Retorno precisa ser uma matriz[64][CAMPODEVISAO] obrigatoriamente
 void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO]);
 
-
+//
 //Prototipo da função que tranforma tamanos em unidades de terminal(64x100) para unidades normalizadas.
 void normaliza(float originalX, float originalY, GLfloat *retorno);
 
+//
 //desenhaJogador:Desenha um quadrado com a cor especificada
 void desenhaJogador(Shader shaderUsado, int VAO, GLfloat x, GLfloat y, float cor[3]);
 
+//
 //DesenhaPeloCodigo: recebe um int e desenha algo dependo do int recebido usando alguma outra funcao de desenho
 void desenhaPeloCodigo(int codigo, Shader shaderUsado, int listaVAOs[NUMVAO], GLfloat x, GLfloat y);
 
+//
 //Recebe um valor em coordenadas normalizadas e retorna a posicao na matriz
 void deNormaliza(float originalX, float originalY, GLfloat *retorno);
 
+//
 //Cria o estado padrao da tela na matriz
 void zeraTela(int vetorDaTela[TERMINALCOLUNAS][TERMINALLINHAS]);
 
+//
 //Desenha um quadrado branco
 void desenhaEmBranco(Shader shaderUsado, int VAO, GLfloat x, GLfloat y);
 
+//
 //Desenha um quadrado cinza
 void desenhaEspacoGoleiro(Shader shaderUsado, int VAO, GLfloat x, GLfloat y);
 
+//
 //Desenha um quadrado branco-acinzentado
 void desenhaFaixaDoCampo(Shader shaderUsado, int VAO, GLfloat x, GLfloat y);
 
+//
 //Desenha um quadrado com a cor de fundo
 void desenhaVazio(Shader shaderUsado, int VAO, GLfloat x, GLfloat y);
 
+//
 //Altera a posicao da bola para as cordenadas dadas
-void posicionaBola(int x, int y);
+void posicionaBola(bola *bolaRecebida,int x, int y);
 
+//
 //Move um time inteiro uma distancia X,Y especificada
-void moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno);
+int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno,int fixador[8],bola *bolaRecebida, bool vetorDeSetas[4]);
 
+
+//Mede os limites X e Y do time dado para fixar a formacao especificada. retorna uma lista de valores
+//encodada em decimal da seguinte forma: [ipppipppipppippp] onde i é o id(0 a 9) e p a posicao(0 a 999) dos valore
+//maxX,MinX,maxY,minY. Lembrando que qualquer valor pode então ser obtido a partidir de uma operação de modulo.
+void fixaTime(jogador timeRecebido[TAMANHODOTIME],int *retorno);
+
+//
+//Atualiza a posição da bola no loop do jogo a cada frame. Verifica colisoes e gerencia a velocidade da bola
+void atualizaBola(bola *bolaRecebida);
 #pragma endregion
 
 int main()
 {
 	
 	#pragma region Inicializa Variaveis
+
+	//A cada quantos "turnos" a bola perde um turno?
+	limitadorDeVelocidadeBola = 3;
 
 	//Tamanho da janela em pixels, de acordo com o numero de colunas
 	int tamanhoDaLarguraJanela = TERMINALCOLUNAS*ESCALA;
@@ -175,25 +220,28 @@ int main()
 
 	//Contadores
 	int i, j;
-
+	
+	//
+	int LimiteXE, limiteXD, limiteYE, limiteYD;
 	//Inicializa vetor da tela
 	zeraTela(vetorDeDadosRecebido);
 	zeraTela(vetorDeDadosInicial);
 
 	//Inicializa a bola nas coredenadas especificadas;
-	bola BolaPadrao = inicializaBola(32, 49);
+	bola bolaPadrao = inicializaBola(32, 49,0,0);
 
 	//Cria time 1:
-	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1);
-	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos };
+	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1), joao = inicializaJogador(33,45,1);
+	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos,joao };
 
 	//Cria time 2:
-	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2);
-	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes};
+	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2), rag = inicializaJogador(33,40,2);
+	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes,rag};
 
 	//Lista de todas as VAOs usadas no programa
 	GLint listaDeEnderecosVAO[NUMVAO];
 
+	
 #pragma endregion
 
 	#pragma region Inicializa GLFW e GL3W
@@ -270,10 +318,16 @@ int main()
 	//Cria vetor para receber coordeadas normalizadas da funcao
 	GLfloat XYnormalizado[2];
 
+	//Define os limites dos times 1 e 2
+	int limiteT1[8],limiteT2[8];
+	fixaTime(time1,limiteT1);
+	fixaTime(time1, limiteT1);
+	//getchar();
+
 #pragma endregion
 
 	#pragma region Loop Principal do jogo
-	
+
 	//Enquanto a janela não fecha
 	while (!glfwWindowShouldClose(janela)) 
 	{
@@ -311,34 +365,43 @@ int main()
 		//Detecta entrada
 		if (glfwGetKey(janela, GLFW_KEY_DOWN) == GLFW_PRESS) {
 
-			//Muda a posicao da bola em 1 pra baixo
-			//posicionaBola(posBola[0], posBola[1] + 1);
-
-			//Atualiza posicao do jogador
-			//posicionaJogador(Carlos.x, Carlos.y + 1, Carlos, &Carlos);
+			//Marca seta pra baixo como pressionada
+			vetorDeSetas[2] = 1;
 
 			//Movimenta o time especificado
-			moveTime(0, 1, time1, time1);
+			if (!moveTime(0, 1, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas) && fimDoCampoDeVisao < 100)
+			{
+				inicioDoCampoDeVisao++;
+			}
 
 		}
 		if (glfwGetKey(janela, GLFW_KEY_UP) == GLFW_PRESS) {
 
-			//Muda a posicao da bola em 1 pra cima
+			//Marca seta pra cima como pressionada
+			vetorDeSetas[3] = 1;
 
-			//posicionaBola(posBola[0], posBola[1] - 1);
-
-			moveTime(0, -1, time1, time1);
+			//Muda a posicao do time, checa colisoes e atualiza campo de visao
+			if (!moveTime(0, -1, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas) &&inicioDoCampoDeVisao > 0)
+			{
+				inicioDoCampoDeVisao--;
+			}
+			
 		}
-		if (glfwGetKey(janela, GLFW_KEY_LEFT) == GLFW_PRESS) {
-
-		//	posicionaBola(posBola[0] + 1, posBola[1]);
-			moveTime(1, 0, time1, time1);
+		if (glfwGetKey(janela, GLFW_KEY_LEFT) == GLFW_PRESS) 
+		{
+			//Marca seta pra esquerda como pressionada
+			vetorDeSetas[1] = 1;
+			moveTime(1, 0, time1, time1,limiteT1, &bolaPadrao, vetorDeSetas);
 		}
 		if (glfwGetKey(janela, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 
+
+			//Marca seta pra direita como pressionada
+			vetorDeSetas[0] = 1;
 			//Muda a posicao da bola em 1 pra baixo
-			moveTime(-1, 0, time1, time1);
-			//posicionaBola(posBola[0] - 1, posBola[1]);
+			moveTime(-1, 0, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas);
+
+			//posicionaBola(&bolaPadrao,bolaPadrao.x - 1, bolaPadrao.y);
 		}
 		if (glfwGetKey(janela, GLFW_KEY_W) == GLFW_PRESS) {
 
@@ -352,13 +415,33 @@ int main()
 				inicioDoCampoDeVisao++;
 			}
 		}
-#pragma endregion
-		
+		#pragma endregion
+
+		#pragma region Atualizacoes
+		//Atualiza valores do jogo
+		if ((contadordeframes % limitadorDeVelocidadeBola)!=1)
+		{
+			atualizaBola(&bolaPadrao);
+		}
+
+		//Limpa vetor de setas pressionadas a cada 0.2sec
+		if (contadordeframes % (FRAMERATE/5) == 1)
+		{
+			vetorDeSetas[0] = 0;
+			vetorDeSetas[1] = 0;
+			vetorDeSetas[2] = 0;
+			vetorDeSetas[3] = 0;
+		}
+	#pragma endregion
+
 		#pragma region Troca buffers
 
 		//Troca buffers
 		glfwSwapBuffers(janela);
 #pragma endregion
+
+		fixaTime(time1, limiteT1);
+		contadordeframes++;
 
 		#pragma region Forca framerate
 		system("@cls||clear");
@@ -368,9 +451,11 @@ int main()
 			
 			Sleep((1.0 / (double)FRAMERATE - tempoCorrido)*1000);
 		}
-		printf("Framerate fixada: %lf\n", 1 / glfwGetTime());
-		printf("Framerate original: %lf\n", 1 / tempoCorrido);
-#pragma endregion		
+		printf("Framerate fixada: %.2lf\n", 1 / glfwGetTime());
+		printf("Framerate original: %.2lf\n", 1 / tempoCorrido);
+		
+#pragma endregion		 
+		
 
 	}
 
@@ -378,6 +463,58 @@ int main()
 }
 
 #pragma region Funcoes
+
+void fixaTime(jogador timeRecebido[TAMANHODOTIME], int *retorno)
+{
+	int c;
+	int maiorX=0, maiorY=0, menorX=180, menorY=180;
+	int idMaiorX, idMaiorY, idMenorX, idMenorY;
+	int retornotmp[8];
+	//Variavel para guardar o retorno. devolve IDmaiorX,maiorX,idMenorX,menorX,idMaiorY,maiorY,idMenorY,menorY
+
+
+	for (c = 0; c < TAMANHODOTIME; c++)
+	{
+		if (timeRecebido[c].x > maiorX)
+		{
+			maiorX = timeRecebido[c].x;
+			idMaiorX = c;
+		}
+
+		if (timeRecebido[c].x < menorX)
+		{
+			menorX = timeRecebido[c].x;
+			idMenorX = c;
+		}
+
+		if (timeRecebido[c].y < menorY)
+		{
+			menorY = timeRecebido[c].y;
+			idMenorY = c;
+		}
+
+		if (timeRecebido[c].y > maiorY)
+		{
+			maiorY = timeRecebido[c].y;
+			idMaiorY = c;
+		}
+
+
+	}
+
+	printf("MaiorX:%i MenorX:%i MaiorY:%i MenorY:%i \n idMaiorX:%i idMenorX:%i idMaiorY:%i idMenorY:%i", maiorX, menorX, maiorY, menorY,idMaiorX,idMenorX,idMaiorY,idMenorY);
+	
+
+	*retorno = idMaiorX;
+	*(retorno+1) = maiorX;
+	*(retorno+2) = idMenorX;
+	*(retorno+3) = menorX;
+	*(retorno + 4) = idMaiorY;
+	*(retorno + 5) = maiorY;
+	*(retorno + 6) = idMenorX;
+	*(retorno + 7) = maiorX;
+
+}
 
 void recebeEntrada(GLFWwindow *window, int key, int scancode, int action, int mods){
 //glfwGetKey:
@@ -556,15 +693,17 @@ GLint inicializaVAOVazia(unsigned int recebeEBO)
 	return VAOVAO;
 }
 
-bola inicializaBola(int x, int y)
+bola inicializaBola(int x, int y,int velX, int velY)
 {
 	bola retorno;
 	retorno.x = x;
 	retorno.y = y;
-
+	retorno.velX = velX;
+	retorno.velY = velY;
 	posBola[0] = x;
 	posBola[1] = y;
 	vetorDeDadosRecebido[x][y] = 3;
+
 	return retorno;
 }
 
@@ -772,11 +911,15 @@ void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLIN
 
 void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno)
 {
+	//int colisao = 0;
+	
+	
 	//Verifica se é possivel posicionar o jogador no local desejado
-	if (vetorDeDadosRecebido[x][y] == 0 || vetorDeDadosRecebido[x][y] == 7)
-	{
+	//if (vetorDeDadosRecebido[x][y] == 0 || vetorDeDadosRecebido[x][y] == 7)
+	//{
 		//Posicao futura que o elemento vai ser desenhado, marcado como desenhado
 		vetorDeDadosDesenhado[x][y] = 1;
+
 		//Posicao do elemento atualizado
 		vetorDeDadosRecebido[x][y] = jogadorRecebido.time;
 
@@ -790,7 +933,7 @@ void posicionaJogador(int x, int y, jogador jogadorRecebido, jogador *retorno)
 		//Retorna valor
 		*retorno = jogadorRecebido;
 
-	}
+	//}
 }
 
 jogador inicializaJogador(int x, int y, int Time)
@@ -805,8 +948,9 @@ jogador inicializaJogador(int x, int y, int Time)
 
 }
 
-void posicionaBola(int x, int y)
+void posicionaBola(bola *bolaRecebida,int x, int y)
 {
+	
 	//Verifica se é possivel posicionar a bola no local desejado
 	if (vetorDeDadosRecebido[x][y] == 0 || vetorDeDadosRecebido[x][y] == 7)
 	{
@@ -821,24 +965,168 @@ void posicionaBola(int x, int y)
 		posBola[0] = x;
 		posBola[1] = y;
 
+		//Atualiza bolaRecebida
+		
+		bolaRecebida->x = x;
+		//bolaRecebida.x = x;
+		bolaRecebida->y = y;
 	}
 }
 
-void moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno)
+int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno, int fixador[8],bola *bolaRecebida,bool vetorDeSetasRecebidas[4])
 {
 	//Cria vetor de retorno
 	jogador timeDeRetorno[TAMANHODOTIME];
 
-	int i;
+	int i, colisao = 0,colisaobola=0,chuteBolaX=0,chuteBolaY=0,distMaiorX,distMenorX,distMaiorY,distMenorY; 
 
+	//checa colisoes na matriz
+	//Verifica se o jogador com o maior X pode aumentar X
+	if (vetorDeDadosRecebido[timeRecebido[fixador[0]].x + distanciaX][timeRecebido[fixador[0]].y + distanciaY] == 9 || vetorDeDadosRecebido[timeRecebido[fixador[0]].x + distanciaX][timeRecebido[fixador[0]].y + distanciaY] == 8)
+	{
+		colisao = 1;
+	}
+	//Verifica se o jogador com o menor pode diminuir X
+	if (vetorDeDadosRecebido[timeRecebido[fixador[2]].x + distanciaX][timeRecebido[fixador[2]].y + distanciaY] == 9 || vetorDeDadosRecebido[timeRecebido[fixador[2]].x + distanciaX][timeRecebido[fixador[2]].y + distanciaY] == 8)
+	{
+		colisao = 1;
+	}
+	//Verifica se o jogador com o maior Y pode aumentar Y
+	if (vetorDeDadosRecebido[timeRecebido[fixador[4]].x + distanciaX][timeRecebido[fixador[4]].y + distanciaY] == 9 || vetorDeDadosRecebido[timeRecebido[fixador[4]].x + distanciaX][timeRecebido[fixador[4]].y + distanciaY] == 8)
+	{
+		colisao = 1;
+	}
+	//Verifica se o jogador com o menor Y pode mudar Y
+	if (vetorDeDadosRecebido[timeRecebido[fixador[6]].x + distanciaX][timeRecebido[fixador[6]].y + distanciaY] == 9 || vetorDeDadosRecebido[timeRecebido[fixador[6]].x + distanciaX][timeRecebido[fixador[6]].y + distanciaY] == 8)
+	{
+		colisao = 1;
+	}
 	//Preenche vetor de retorno com os dados atualizados pela funcao
+	
+	
+	//Verifica colisão nos pontos que não estão nas bordas mas que são intransponiveis
 	for (i = 0; i < TAMANHODOTIME; i++)
 	{
+		if (vetorDeDadosRecebido[timeRecebido[i].x + distanciaX][timeRecebido[i].y + distanciaY] == 2)
+		{
+			colisao = 1;
+		}
 
-		posicionaJogador(timeRecebido[i].x + distanciaX, timeRecebido[i].y + distanciaY, timeRecebido[i], &timeRecebido[i]);
 	}
 
+	//Verifica colisão dos jogadores com a bola
+	for (i = 0; i < TAMANHODOTIME; i++)
+	{
+		if (vetorDeDadosRecebido[timeRecebido[i].x + distanciaX][timeRecebido[i].y + distanciaY] == 3)
+		{
+			colisao = 1;
+			colisaobola = 1;
+			//Diz sentido do chute da bola
+			chuteBolaX = distanciaX;
+			chuteBolaY = distanciaY;
+		}
 
+	}
+
+	//Movimenta a bola
+	if (colisaobola == 1)
+	{
+		//Só vai detectar a diagonal durante o pressionamento das setas de esquerda ou direita, já que o flag
+		//da tecla cima estar pressionada antecede a mesma, logo a velocidade Y é sempre a que é complementada
+		vetorDeSetas;
+
+		//detecta se a tecla pra baixo e esquerda foram pressonadas ao mesmo tempo
+		if (vetorDeSetasRecebidas[2] == 1 && vetorDeSetasRecebidas[1] == 1)
+		{
+			bolaRecebida->velY = chuteBolaX * 5;;
+			bolaRecebida->velX = bolaRecebida->velY;
+		}
+
+		//detecta se a tecla pra baixo e direita foram pressonadas ao mesmo tempo
+		else if (vetorDeSetasRecebidas[2] == 1 && vetorDeSetasRecebidas[0] == 1)
+		{
+			bolaRecebida->velY = chuteBolaX * -5;
+			bolaRecebida->velX = bolaRecebida->velY*-1;
+		}
+
+		//detecta se a tecla pra cima e direita foram pressonadas ao mesmo tempo
+		else if (vetorDeSetasRecebidas[3] == 1 && vetorDeSetasRecebidas[0] == 1)
+		{
+			bolaRecebida->velY = (chuteBolaX * 5);
+			bolaRecebida->velX = bolaRecebida->velY;
+		}
+
+		//detecta se a tecla pra cima e esquerda foram pressonadas ao mesmo tempo
+		else if (vetorDeSetasRecebidas[3] == 1 && vetorDeSetasRecebidas[1] == 1)
+		{
+			bolaRecebida->velY = chuteBolaX * -5;
+			bolaRecebida->velX = bolaRecebida->velY*-1;
+		}
+		else
+		{
+			bolaRecebida->velX = chuteBolaX * 5;
+			bolaRecebida->velY = chuteBolaY * 5;
+		}
+	}
+
+	//Movimenta os jogadores
+	if (colisao == 0)
+	{
+		for (i = 0; i < TAMANHODOTIME; i++)
+		{
+			posicionaJogador(timeRecebido[i].x + distanciaX, timeRecebido[i].y + distanciaY, timeRecebido[i], &timeRecebido[i]);
+		}
+
+	}
+	//Retorna se houve colisao ou não
+	return colisao;
+}
+
+void atualizaBola(bola *bolaRecebida)
+{
+
+	//Atualiza posicao da bola a cada frame, dependendo da velocidade X e Y da bola
+
+	//Sentido esquerda
+	if (bolaRecebida->velX > 0)
+	{
+		posicionaBola(bolaRecebida, (bolaRecebida->x) + 1, (bolaRecebida->y) + 0);
+		bolaRecebida->velX--;
+	}
+	//Sentido direita
+	if (bolaRecebida->velX < 0)
+	{
+		posicionaBola(bolaRecebida, (bolaRecebida->x) - 1, (bolaRecebida->y) + 0);
+		bolaRecebida->velX++;
+	}
+	//Sentido baixo
+	if (bolaRecebida->velY > 0)
+	{
+		posicionaBola(bolaRecebida, (bolaRecebida->x) + 0, (bolaRecebida->y) + 1);
+		bolaRecebida->velY--;
+	}
+	//Sentido cima
+	if (bolaRecebida->velY < 0)
+	{
+		posicionaBola(bolaRecebida, (bolaRecebida->x) + 0, (bolaRecebida->y) - 1);
+		bolaRecebida->velY++;
+	}
+
+	//Verifica colisao da bola com o gol
+	
+	//Checa gol de baixo
+	if (vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y+1] == 8 && bolaRecebida->velY > 1)
+	{
+		posicionaBola(bolaRecebida, bolaRecebida->x, bolaRecebida->y + bolaRecebida->velY);
+		
+		bolaRecebida->velY = 0;
+
+		//Faz a bola "entrar no gol"
+		vetorDeDadosRecebido[bolaRecebida->x][(bolaRecebida->y)+ 2] = 3;
+		vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y] = vetorDeDadosInicial[bolaRecebida->x][bolaRecebida->y];
+		placar[0]++;
+
+	}
 }
 
 #pragma endregion
