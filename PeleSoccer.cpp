@@ -1169,6 +1169,36 @@ void atualizaBola(bola *bolaRecebida)
 
 	}
 
+	//Verifica colisão da bola com as paredes
+	//Simplesmente inverte o sentido da bola dependendo da direção da parece colidida
+
+	//Se ao subir a bola no plano (y-1) a bola encontrar uma parede, encontrou o limite superior
+	if (vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y - 1] == 9)
+	{
+		//Inverte sentido da velocidade Y
+		bolaRecebida->velY = bolaRecebida->velY*-1;
+	}
+
+	//Se ao descer a bola no plano (y+1) a bola encontrar uma parede, encontrou o limite inferior
+	if (vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y + 1] == 9)
+	{
+		//Inverte sentido da velocidade Y
+		bolaRecebida->velY = bolaRecebida->velY*-1;
+	}
+
+	//Checa canto esquerdo
+	if (vetorDeDadosRecebido[(bolaRecebida->x) + 1][bolaRecebida->y] == 9)
+	{
+		bolaRecebida->velX = bolaRecebida->velX*-1;
+	}
+
+	//Checa canto direito
+	if (vetorDeDadosRecebido[(bolaRecebida->x) - 1][bolaRecebida->y] == 9)
+	{
+		bolaRecebida->velX = bolaRecebida->velX*-1;
+	}
+
+
 
 }
 
