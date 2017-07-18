@@ -118,7 +118,9 @@ typedef struct bola
 
 #pragma region Prototipos
 
-
+//
+//"Limpa" um campo com um campo inicial dado
+//void LimpaCampo()
 //
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
 GLint inicializaVAOVazia(unsigned int recebeEBO);
