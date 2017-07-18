@@ -2,8 +2,8 @@
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
 #define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
-#define CAMPODEVISAO 40//Campo de visao do jogador
-#define TAMANHODOTIME 3//Tamanho maximo de cada time
+#define CAMPODEVISAO 50//Campo de visao do jogador
+#define TAMANHODOTIME 4//Tamanho maximo de cada time
 #define FRAMERATE 30 //Define FPS
  
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
@@ -59,7 +59,7 @@ bool vetorDeDadosDesenhado[TERMINALCOLUNAS][TERMINALLINHAS];
 //Matriz com os dados do campo de visão atual
 int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
 //Vetor que representa a posicao X,Y da bola na matriz
-int posBola[2] = { 32,50 };
+int posBola[2] = { 32,49 };
 
 //Placar do jogo, time1 eh [0], time2 eh [1]
 int placar[2];
@@ -74,7 +74,7 @@ bool vetorDeSetas2[4] = { 0,0,0,0 };
 
 
 //Limites do campo de visão
-int inicioDoCampoDeVisao=10, fimDoCampoDeVisao=inicioDoCampoDeVisao+CAMPODEVISAO;
+int inicioDoCampoDeVisao=30, fimDoCampoDeVisao=inicioDoCampoDeVisao+CAMPODEVISAO;
 
 //Serve para regurlar a velocidade da atualização da bola em relacao aos jogadores
 int limitadorDeVelocidadeBola;
@@ -104,6 +104,12 @@ typedef struct jogador
 	
 	//1:azul, 2:Vermelho
 	int time;
+
+	//Posicao inicialX do jogador
+	int posInicialX;
+
+	//Posicao InicialY do jogador
+	int posInicialY;
 };
 
 //Estrutura que representa uma bola
@@ -119,8 +125,9 @@ typedef struct bola
 #pragma region Prototipos
 
 //
-//"Limpa" um campo com um campo inicial dado
-//void LimpaCampo()
+//Retorna um time para sua posicao inicial
+void limpaTime(jogador timeRecebido[TAMANHODOTIME]);
+
 //
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
 GLint inicializaVAOVazia(unsigned int recebeEBO);
@@ -208,12 +215,13 @@ void fixaTime(jogador timeRecebido[TAMANHODOTIME],int *retorno);
 
 //
 //Atualiza a posição da bola no loop do jogo a cada frame. Verifica colisoes e gerencia a velocidade da bola
-void atualizaBola(bola *bolaRecebida);
+int atualizaBola(bola *bolaRecebida);
 #pragma endregion
 
 int main()
 {
 	
+	int limpoRecentemente = 0;
 	#pragma region Inicializa Variaveis
 
 	//A cada quantos "turnos" a bola perde um turno
@@ -245,12 +253,12 @@ int main()
 	bola bolaPadrao = inicializaBola(32, 49,0,0);
 
 	//Cria time 1:
-	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1);
-	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos };
+	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1),lugo = inicializaJogador(38,36,1);
+	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos,lugo};
 
 	//Cria time 2:
-	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2);
-	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes};
+	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2), Lopeso = inicializaJogador(33, 60, 2);
+	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes,Lopeso};
 
 
 	//Lista de todas as VAOs usadas no programa
@@ -470,7 +478,7 @@ int main()
 		//Atualiza valores do jogo
 		if ((contadordeframes % limitadorDeVelocidadeBola)!=1)
 		{
-			atualizaBola(&bolaPadrao);
+			limpoRecentemente = atualizaBola(&bolaPadrao);
 		}
 
 		//Limpa vetor de setas pressionadas a cada 0.2sec
@@ -486,7 +494,20 @@ int main()
 			vetorDeSetas2[2] = 0;
 			vetorDeSetas2[3] = 0;
 		}
-	#pragma endregion
+	
+		//Limpa tela se necessario
+		if (limpoRecentemente == 1)
+		{
+
+			limpaTime(time1);
+			limpaTime(time2);
+			posicionaBola(&bolaPadrao, 32, 49);
+			bolaPadrao.velX = 0;
+			bolaPadrao.velY = 0;
+			limpoRecentemente = 0;
+			inicioDoCampoDeVisao = 30;
+		}
+#pragma endregion
 
 		#pragma region Troca buffers
 
@@ -1000,6 +1021,8 @@ jogador inicializaJogador(int x, int y, int Time)
 	jogador retorno;
 	retorno.x = x;
 	retorno.y = y;
+	retorno.posInicialX = x;
+	retorno.posInicialY = y;
 	retorno.time = Time;
 	vetorDeDadosRecebido[x][y] = Time;
 	return retorno;
@@ -1141,10 +1164,11 @@ int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME]
 	return colisao;
 }
 
-void atualizaBola(bola *bolaRecebida)
+int atualizaBola(bola *bolaRecebida)
 {
 
 	//Atualiza posicao da bola a cada frame, dependendo da velocidade X e Y da bola
+	int foiLimpo = 0;
 
 	//Sentido esquerda
 	if (bolaRecebida->velX > 0)
@@ -1183,6 +1207,7 @@ void atualizaBola(bola *bolaRecebida)
 		vetorDeDadosRecebido[bolaRecebida->x][(bolaRecebida->y)+ 2] = 3;
 		vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y] = vetorDeDadosInicial[bolaRecebida->x][bolaRecebida->y];
 		placar[0]++;
+		foiLimpo = 1;
 
 	}
 	//Checa gol de cima 
@@ -1196,7 +1221,8 @@ void atualizaBola(bola *bolaRecebida)
 		vetorDeDadosRecebido[bolaRecebida->x][(bolaRecebida->y) - 2] = 3;
 		vetorDeDadosRecebido[bolaRecebida->x][bolaRecebida->y] = vetorDeDadosInicial[bolaRecebida->x][bolaRecebida->y];
 		placar[1]++;
-
+		foiLimpo = 1;
+		
 	}
 
 	//Verifica colisão da bola com as paredes
@@ -1228,7 +1254,7 @@ void atualizaBola(bola *bolaRecebida)
 		bolaRecebida->velX = bolaRecebida->velX*-1;
 	}
 
-
+	return foiLimpo;
 
 }
 
@@ -1236,4 +1262,23 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
+
+void limpaTime(jogador timeRecebido[TAMANHODOTIME])
+{
+	int i;
+
+	//Retorna todos os jogadores de ambos os times para a suas posicoes inicias
+	for (i = 0; i < TAMANHODOTIME; i++)
+	{
+		/*
+		vetorDeDadosRecebido[timeRecebido[i].x][timeRecebido[i].y] = vetorDeDadosInicial[timeRecebido[i].x][timeRecebido[i].y];
+		timeRecebido[i].x = timeRecebido[i].posInicialX;
+		timeRecebido[i].y = timeRecebido[i].posInicialY;
+		vetorDeDadosRecebido[timeRecebido[i].x][timeRecebido[i].y] = vetorDeDadosInicial[timeRecebido[i].x][timeRecebido[i].y];
+		*/
+
+		posicionaJogador(timeRecebido[i].posInicialX, timeRecebido[i].posInicialY, timeRecebido[i], &timeRecebido[i]);
+	}
+}
+
  #pragma endregion
