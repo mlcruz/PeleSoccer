@@ -220,12 +220,17 @@ int atualizaBola(bola *bolaRecebida);
 int main()
 {
 	
-	int limpoRecentemente = 0;
 	#pragma region Inicializa Variaveis
+
+
+	//A tela recebeu um comando de limpesa?
+	int limpoRecentemente = 0;
+
 
 	//A cada quantos "turnos" a bola perde um turno
 	limitadorDeVelocidadeBola = 3;
 
+	//Duracao da partida
 	int tempoMaxDeJogo = 60;
 
 	//Tamanho da janela em pixels, de acordo com o numero de colunas
@@ -386,7 +391,7 @@ int main()
 			{
 				//Desenha chamando funcao de desenho dependendo do valor na matriz de dados
 				
-				normaliza(i, j, XYnormalizado);
+				normaliza((float)i, (float)j, XYnormalizado);
 				desenhaPeloCodigo(vetorDoCampoDeVisao[i][j], shaderPadrao, listaDeEnderecosVAO, XYnormalizado[0],XYnormalizado[1]);
 				
 			}
@@ -523,7 +528,7 @@ int main()
 		if (((1.0 / (double)FRAMERATE) - tempoCorrido) > 0)
 		{
 			
-			Sleep((1.0 / (double)FRAMERATE - tempoCorrido)*1000);
+			Sleep((DWORD)(1.0 / (double)FRAMERATE - tempoCorrido)*1000);
 		}
 		printf("Framerate fixada: %.2lf\n", 1 / glfwGetTime());
 		printf("Framerate original: %.2lf\n", 1 / tempoCorrido);

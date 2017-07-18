@@ -1,7 +1,3 @@
 ﻿  PeleSoccer.cpp
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\lib\include\compilashader.h(57): warning C4101: 'infoLog': unreferenced local variable
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\lib\include\compilashader.h(56): warning C4101: 'success': unreferenced local variable
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(389): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(526): warning C4244: 'argument': conversion from 'double' to 'DWORD', possible loss of data
   PeleSoccer.vcxproj -> C:\Users\w8.1\documents\visual studio 2015\Projects\PeleSoccer\Debug\PeleSoccer.exe
   PeleSoccer.vcxproj -> C:\Users\w8.1\documents\visual studio 2015\Projects\PeleSoccer\Debug\PeleSoccer.pdb (Full PDB)
