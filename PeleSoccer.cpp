@@ -3,7 +3,7 @@
 #define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
 #define CAMPODEVISAO 40//Campo de visao do jogador
-#define TAMANHODOTIME 4 //Tamanho maximo de cada time
+#define TAMANHODOTIME 3//Tamanho maximo de cada time
 #define FRAMERATE 30 //Define FPS
  
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
@@ -70,6 +70,7 @@ int contadordeframes = 0;
 //Guarda quais teclas de movimento foram pressionadas pra movimentacao em diagonal
 //0 direita(X+), 1 esquerda(X-), 2 BAIXO(Y+), 3 cima(Y-);
 bool vetorDeSetas[4] = { 0,0,0,0 };
+bool vetorDeSetas2[4] = { 0,0,0,0 };
 
 
 //Limites do campo de visão
@@ -242,12 +243,13 @@ int main()
 	bola bolaPadrao = inicializaBola(32, 49,0,0);
 
 	//Cria time 1:
-	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1), joao = inicializaJogador(33,45,1);
-	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos,joao };
+	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1);
+	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos };
 
 	//Cria time 2:
-	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2), rag = inicializaJogador(33,40,2);
-	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes,rag};
+	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2);
+	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes};
+
 
 	//Lista de todas as VAOs usadas no programa
 	GLint listaDeEnderecosVAO[NUMVAO];
@@ -343,11 +345,11 @@ int main()
 	//Define os limites dos times 1 e 2
 	int limiteT1[8],limiteT2[8];
 	fixaTime(time1,limiteT1);
-	fixaTime(time1, limiteT1);
+	fixaTime(time2, limiteT2);
 	//getchar();
 
 	//Raw timer no comeco do programa
-	unsigned long int rawTime = glfwGetTimerValue();
+//	unsigned long int rawTime = glfwGetTimerValue();
 
 #pragma endregion
 
@@ -430,18 +432,38 @@ int main()
 		}
 		if (glfwGetKey(janela, GLFW_KEY_W) == GLFW_PRESS) {
 
-			if (inicioDoCampoDeVisao > 0) {
-				inicioDoCampoDeVisao--;
-			}
+			//Marca seta pra cima como pressionada
+			vetorDeSetas2[3] = 1;
+
+			//Muda a posicao do time, checa colisoes e atualiza campo de visao
+			moveTime(0, -1, time2, time2, limiteT2, &bolaPadrao, vetorDeSetas2);
+			
 		}
 		if (glfwGetKey(janela, GLFW_KEY_S) == GLFW_PRESS) {
 
-			if (fimDoCampoDeVisao < 100) {
-				inicioDoCampoDeVisao++;
-			}
-		}
-		#pragma endregion
+			//Marca seta pra baixo como pressionada
+			vetorDeSetas2[2] = 1;
 
+			//Movimenta o time especificado
+			moveTime(0, 1, time2, time2, limiteT2, &bolaPadrao, vetorDeSetas2);
+			
+		}
+		if (glfwGetKey(janela, GLFW_KEY_A) == GLFW_PRESS)
+		{
+
+			//Marca seta pra esquerda como pressionada
+			vetorDeSetas2[1] = 1;
+			moveTime(1, 0, time2, time2, limiteT2, &bolaPadrao, vetorDeSetas2);
+		}
+		if (glfwGetKey(janela, GLFW_KEY_D) == GLFW_PRESS)
+		{
+			//Marca seta pra direita como pressionada
+			vetorDeSetas2[0] = 1;
+			//Muda a posicao da bola em 1 pra baixo
+			moveTime(-1, 0, time2, time2, limiteT2, &bolaPadrao, vetorDeSetas2);
+		}
+		
+#pragma endregion
 		#pragma region Atualizacoes
 		//Atualiza valores do jogo
 		if ((contadordeframes % limitadorDeVelocidadeBola)!=1)
@@ -456,6 +478,11 @@ int main()
 			vetorDeSetas[1] = 0;
 			vetorDeSetas[2] = 0;
 			vetorDeSetas[3] = 0;
+
+			vetorDeSetas2[0] = 0;
+			vetorDeSetas2[1] = 0;
+			vetorDeSetas2[2] = 0;
+			vetorDeSetas2[3] = 0;
 		}
 	#pragma endregion
 
@@ -465,7 +492,7 @@ int main()
 		glfwSwapBuffers(janela);
 #pragma endregion
 
-		fixaTime(time1, limiteT1);
+	//	fixaTime(time1, limiteT1);
 		contadordeframes++;
 
 		#pragma region Forca framerate
@@ -1023,7 +1050,8 @@ int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME]
 	//Verifica se o jogador com o maior Y pode aumentar Y
 	if (vetorDeDadosRecebido[timeRecebido[fixador[4]].x + distanciaX][timeRecebido[fixador[4]].y + distanciaY] == 9 || vetorDeDadosRecebido[timeRecebido[fixador[4]].x + distanciaX][timeRecebido[fixador[4]].y + distanciaY] == 8)
 	{
-		colisao = 1;
+		//Ignora a colisão do jogador mais extremo ao norte para evitar travamentos 
+		//colisao = 1;
 	}
 	//Verifica se o jogador com o menor Y pode mudar Y
 	if (vetorDeDadosRecebido[timeRecebido[fixador[6]].x + distanciaX][timeRecebido[fixador[6]].y + distanciaY] == 9 || vetorDeDadosRecebido[timeRecebido[fixador[6]].x + distanciaX][timeRecebido[fixador[6]].y + distanciaY] == 8)
@@ -1036,7 +1064,7 @@ int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME]
 	//Verifica colisão nos pontos que não estão nas bordas mas que são intransponiveis
 	for (i = 0; i < TAMANHODOTIME; i++)
 	{
-		if (vetorDeDadosRecebido[timeRecebido[i].x + distanciaX][timeRecebido[i].y + distanciaY] == 2)
+		if (vetorDeDadosRecebido[timeRecebido[i].x + distanciaX][timeRecebido[i].y + distanciaY] == 2 || vetorDeDadosRecebido[timeRecebido[i].x + distanciaX][timeRecebido[i].y + distanciaY] == 1)
 		{
 			colisao = 1;
 		}
@@ -1206,4 +1234,4 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
-#pragma endregion
+ #pragma endregion
