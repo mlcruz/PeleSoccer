@@ -11,9 +11,8 @@
 #include <compilaShader.h> //Compila e linka programas de shaders utilizados
 #include <Windows.h>
 #include <string.h>
-
 #include <time.h>
-#include <inttypes.h>
+
 
 //Bibliotecas para operacoes com matrizes
 #include <glm\glm.hpp> 
@@ -47,8 +46,8 @@
 
 //Proporcao da do campo de visao em relacao a tela toda
 const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
-const float PASSOX = 0.03125; //tamanho minimo de um passo X no plano 
-const float PASSOY = 0.02*PROPORCAO;//Tamanho minimo de um passo no Y do plano
+const float PASSOX = 0.03125f; //tamanho minimo de um passo X no plano 
+const float PASSOY = 0.02f*PROPORCAO;//Tamanho minimo de um passo no Y do plano
 
 //Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
 int vetorDeDadosInicial[TERMINALCOLUNAS][TERMINALLINHAS];
@@ -91,7 +90,7 @@ typedef struct quadrado
 		0, 1, 3,   // Triangulo 1
 		1, 2, 3    // Triangulo 2
 	};
-};
+} quadrado;
 
 //Estrutura que representa um jogador
 typedef struct jogador 
@@ -110,7 +109,7 @@ typedef struct jogador
 
 	//Posicao InicialY do jogador
 	int posInicialY;
-};
+} jogador;
 
 //Estrutura que representa uma bola
 typedef struct bola
@@ -119,7 +118,7 @@ typedef struct bola
 	int y;
 	int velX;
 	int velY;
-};
+} bola;
 #pragma endregion
 
 #pragma region Prototipos
@@ -548,7 +547,7 @@ void fixaTime(jogador timeRecebido[TAMANHODOTIME], int *retorno)
 	int c;
 	int maiorX=0, maiorY=0, menorX=180, menorY=180;
 	int idMaiorX, idMaiorY, idMenorX, idMenorY;
-	int retornotmp[8];
+//	int retornotmp[8];
 	//Variavel para guardar o retorno. devolve IDmaiorX,maiorX,idMenorX,menorX,idMaiorY,maiorY,idMenorY,menorY
 
 
@@ -835,7 +834,7 @@ void desenhaPeloCodigo(int codigo,Shader shaderUsado,int listaVAOs[NUMVAO],GLflo
 	}
 
 	//Limpa estado de desenhado
-	vetorDeDadosDesenhado[(int)XYdenormalizado[0]][(int)XYdenormalizado[1]] == 0;
+	vetorDeDadosDesenhado[(int)XYdenormalizado[0]][(int)XYdenormalizado[1]] = 0;
 }
 
 void desenhaJogador(Shader shaderUsado, int VAO,GLfloat x, GLfloat y, float cor[3]) {
@@ -973,7 +972,7 @@ void desenhaVazio(Shader shaderUsado, int VAO, GLfloat x, GLfloat y) {
 void atuallizaMatrizCampoDeVisao(int matrizOriginal[TERMINALCOLUNAS][TERMINALLINHAS], int enderecoDoRetorno[TERMINALCOLUNAS][CAMPODEVISAO])
 {
 
-	int matrizDeRetorno[TERMINALCOLUNAS][CAMPODEVISAO];
+//	int matrizDeRetorno[TERMINALCOLUNAS][CAMPODEVISAO];
 	int i, j;
 	for (i = 0; i < TERMINALCOLUNAS; i++)
 	{
@@ -1057,9 +1056,9 @@ void posicionaBola(bola *bolaRecebida,int x, int y)
 int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno, int fixador[8],bola *bolaRecebida,bool vetorDeSetasRecebidas[4])
 {
 	//Cria vetor de retorno
-	jogador timeDeRetorno[TAMANHODOTIME];
+//	jogador timeDeRetorno[TAMANHODOTIME];
 
-	int i, colisao = 0,colisaobola=0,chuteBolaX=0,chuteBolaY=0,distMaiorX,distMenorX,distMaiorY,distMenorY; 
+	int i, colisao = 0, colisaobola = 0, chuteBolaX = 0, chuteBolaY = 0;
 
 	//checa colisoes na matriz
 	//Verifica se o jogador com o maior X pode aumentar X
