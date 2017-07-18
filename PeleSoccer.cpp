@@ -27,9 +27,9 @@
 //3º:Interacao entre jogadores e a bola: 100%
 //4º:Implementar 30 fps: 100%
 //5º:Verificar condicoes de pontuacao e vitoria: 100%
-//6º:Implemetnar goleiro
+//6º:Implemetnar goleiro:100%
 //7º:Leitura de arquivos com formacoes de jogadores
-//8º:Implementar controle do segundo time(facil)
+//8º:Implementar controle do segundo time:100%
 //9º:Implementar tabela de high scores
 //--
 //Extra:
@@ -58,7 +58,7 @@ bool vetorDeDadosDesenhado[TERMINALCOLUNAS][TERMINALLINHAS];
 //Matriz com os dados do campo de visão atual
 int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
 //Vetor que representa a posicao X,Y da bola na matriz
-int posBola[2] = { 32,49 };
+int posBola[2];
 
 //Placar do jogo, time1 eh [0], time2 eh [1]
 int placar[2];
@@ -123,6 +123,9 @@ typedef struct bola
 
 #pragma region Prototipos
 
+void atualizaGoleiro(jogador goleiroRecebido,jogador *goleiroRetornado);
+
+
 //
 //Retorna um time para sua posicao inicial
 void limpaTime(jogador timeRecebido[TAMANHODOTIME]);
@@ -131,9 +134,11 @@ void limpaTime(jogador timeRecebido[TAMANHODOTIME]);
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
 GLint inicializaVAOVazia(unsigned int recebeEBO);
 
+//
 //inicializaQuadrado:(GLfloat x, GLfloat ) -> quadrado Quadrado
 //Recebe um X e um Y e retorna uma estrutura quadrado com um array de vertices naquela posição
 quadrado inicializaQuadrado(GLfloat x, GLfloat y);
+
 
 //Função para receber as teclas pressionadas pelo usuario por callback
 //Recebe um endereço na memoria de uma estrutura do tipo GLFW, e faz alguma coisa dependendo do estado atual de
@@ -157,6 +162,7 @@ jogador inicializaJogador(int x, int y, int Time);
 //Inicializa uma bola
 bola inicializaBola(int x, int y,int velX,int velY);
 
+//
 //Cria uma matriz altura CAMPODEVISAO e largura do campo, com base na matriz inteira, e atribui no endereo recebido
 //Iniciando no 0,0 da tela, com CAMPODEVISAO/2 para cada lado da tela
 //Retorno precisa ser uma matriz[64][CAMPODEVISAO] obrigatoriamente
@@ -222,10 +228,9 @@ int main()
 	
 	#pragma region Inicializa Variaveis
 
-
+	
 	//A tela recebeu um comando de limpesa?
 	int limpoRecentemente = 0;
-
 
 	//A cada quantos "turnos" a bola perde um turno
 	limitadorDeVelocidadeBola = 3;
@@ -248,10 +253,11 @@ int main()
 	//Tempo atual desde o inicio do jogo
 	int tempoDeJogo;
 
-	//
+	
 	//Inicializa vetor da tela
 	zeraTela(vetorDeDadosRecebido);
 	zeraTela(vetorDeDadosInicial);
+
 
 	//Inicializa a bola nas coredenadas especificadas;
 	bola bolaPadrao = inicializaBola(32, 49,0,0);
@@ -263,6 +269,12 @@ int main()
 	//Cria time 2:
 	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2), Lopeso = inicializaJogador(33, 60, 2);
 	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes,Lopeso};
+
+	//Goleiros
+	jogador goleiro1 = inicializaJogador(32, 98, 2);
+	jogador goleiro2 = inicializaJogador(32, 1, 1);
+
+
 
 
 	//Lista de todas as VAOs usadas no programa
@@ -379,6 +391,7 @@ int main()
 
 		//Atualiza campo de visao
 		fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
+
 		atuallizaMatrizCampoDeVisao(vetorDeDadosRecebido, vetorDoCampoDeVisao);
 #pragma endregion	
 				
@@ -483,6 +496,15 @@ int main()
 		if ((contadordeframes % limitadorDeVelocidadeBola)!=1)
 		{
 			limpoRecentemente = atualizaBola(&bolaPadrao);
+			
+
+		}
+
+		//Velocidade do goleiro
+		if ((contadordeframes % 2) == 1)
+		{
+			atualizaGoleiro(goleiro1, &goleiro1);
+			atualizaGoleiro(goleiro2, &goleiro2);
 		}
 
 		//Limpa vetor de setas pressionadas a cada 0.2sec
@@ -519,10 +541,9 @@ int main()
 		glfwSwapBuffers(janela);
 #pragma endregion
 
-	//	fixaTime(time1, limiteT1);
-		contadordeframes++;
 
 		#pragma region Forca framerate
+		contadordeframes++;
 		system("@cls||clear");
 		tempoCorrido = glfwGetTime();
 		if (((1.0 / (double)FRAMERATE) - tempoCorrido) > 0)
@@ -546,6 +567,21 @@ int main()
 }
 
 #pragma region Funcoes
+
+void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado)
+{
+	//Se o goleiro está no gol e pode ir para direita
+	if (vetorDeDadosRecebido[goleiroRecebido.x + 1][goleiroRecebido.y] == 8 && posBola[0] > goleiroRecebido.x)
+	{
+		posicionaJogador(goleiroRecebido.x + 1, goleiroRecebido.y, goleiroRecebido, goleiroRetornado);
+	}
+
+	//Se o goleiro está no gol e pode ir para esquerda
+	if (vetorDeDadosRecebido[goleiroRecebido.x - 1][goleiroRecebido.y] == 8 && posBola[0] < goleiroRecebido.x)
+	{
+		posicionaJogador(goleiroRecebido.x - 1, goleiroRecebido.y, goleiroRecebido, goleiroRetornado);
+	}
+}
 
 void fixaTime(jogador timeRecebido[TAMANHODOTIME], int *retorno)
 {
