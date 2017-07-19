@@ -1,10 +1,10 @@
 #define TERMINALLINHAS  100 //Numero de linhas do terminal
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
-#define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
 #define CAMPODEVISAO 50//Campo de visao do jogador
+
 //#define TAMANHODOTIME 4//Tamanho maximo de cada time
-#define FRAMERATE 30 //Define FPS
+//#define FRAMERATE 30 //Define FPS
 
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
 #include <GLFW/glfw3.h> //GLFW para renderizar a janela
@@ -26,7 +26,10 @@ const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
 const float PASSOX = 0.03125f; //tamanho minimo de um passo X no plano 
 const float PASSOY = 0.02f*PROPORCAO;//Tamanho minimo de um passo no Y do plano
 int TAMANHODOTIME = 4;
-
+int tamanhoEspacoGoleiro = 10;
+int forcaDoChute = 5;
+int FRAMERATE = 30;
+int ESCALA = 8;
 //Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
 int vetorDeDadosInicial[TERMINALCOLUNAS][TERMINALLINHAS];
 
@@ -50,7 +53,7 @@ int placar[2];
 int inicioDoCampoDeVisao = 30, fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
 
 //Serve para regurlar a velocidade da atualização da bola em relacao aos jogadores
-int limitadorDeVelocidadeBola;
+int limitadorDeVelocidadeBola = 3;
 
 //Matriz identidade que não modifica o vertice
 const glm::mat4 matrixIdentidade;
@@ -103,7 +106,9 @@ typedef struct bola
 #pragma endregion
 
 #pragma region Prototipos
+//Retorna maior valor encontrado no arquivo binario com a pontuacao
 
+int *maiorDosPontos(char *retorno);
 //Le o arquivo binario de pontuação e mostra na tela
 void leArquivoDePontos();
 
@@ -308,7 +313,43 @@ void leArquivoDePontos()
 		}
 	}
 }
-		
+
+int *maiorDosPontos(char *retorno)
+{
+	struct bufferDePontos
+	{
+		int pontos1;
+		int pontos2;
+
+		char nome1[17];
+		char nome2[17];
+	};
+
+	FILE *arquivoDePontos;
+	bufferDePontos bufferDeLeitura;
+	int p1, p2;
+	//Ve se arquivo existe
+	if ((arquivoDePontos = fopen("pontos.bin", "rb")) != NULL)
+	{
+		rewind(arquivoDePontos);
+		//Coloca leitor de arquivos no comeco do arquivo
+		fseek(arquivoDePontos, 0, SEEK_SET);
+		//Le primeiro valor(maior valor)
+		fread(&bufferDeLeitura, sizeof(bufferDeLeitura), 1, arquivoDePontos);
+		p1 = bufferDeLeitura.pontos1;
+		p2 = bufferDeLeitura.pontos2;
+		sprintf(retorno, "Recorde: %i a %i", p1, p2);
+		return 0;
+
+	}
+	else
+	{	//Se não existe, cria vazio
+		fclose(fopen("pontos.bin", "wb"));
+	}
+
+	
+
+}
 void escreveArquivoDePontos(char *nomeDoJogador1,char *nomeDoJogador2, int placarFinal[2])
 {
 	struct bufferDePontos
@@ -546,7 +587,7 @@ void zeraTela(int vetorDaTela[TERMINALCOLUNAS][TERMINALLINHAS])
 			else if (j == 1 || j == 98 || j == 0 || j == 99)
 			{
 				//Cria o espaco do goleiro
-				if (i > 27 && i < 37)
+				if (i > (64/2) - (tamanhoEspacoGoleiro/2) && i < (64 / 2) + (tamanhoEspacoGoleiro / 2))
 				{
 					*(*(vetorDaTela + i) + j) = 8;
 				}
@@ -996,34 +1037,34 @@ int moveTime(int distanciaX, int distanciaY, jogador *timeRecebido, jogador *ret
 		//detecta se a tecla pra baixo e esquerda foram pressonadas ao mesmo tempo
 		if (vetorDeSetasRecebidas[2] == 1 && vetorDeSetasRecebidas[1] == 1)
 		{
-			bolaRecebida->velY = chuteBolaX * 5;;
+			bolaRecebida->velY = chuteBolaX * forcaDoChute;;
 			bolaRecebida->velX = bolaRecebida->velY;
 		}
 
 		//detecta se a tecla pra baixo e direita foram pressonadas ao mesmo tempo
 		else if (vetorDeSetasRecebidas[2] == 1 && vetorDeSetasRecebidas[0] == 1)
 		{
-			bolaRecebida->velY = chuteBolaX * -5;
+			bolaRecebida->velY = chuteBolaX * -forcaDoChute;
 			bolaRecebida->velX = bolaRecebida->velY*-1;
 		}
 
 		//detecta se a tecla pra cima e direita foram pressonadas ao mesmo tempo
 		else if (vetorDeSetasRecebidas[3] == 1 && vetorDeSetasRecebidas[0] == 1)
 		{
-			bolaRecebida->velY = (chuteBolaX * 5);
+			bolaRecebida->velY = (chuteBolaX * forcaDoChute);
 			bolaRecebida->velX = bolaRecebida->velY;
 		}
 
 		//detecta se a tecla pra cima e esquerda foram pressonadas ao mesmo tempo
 		else if (vetorDeSetasRecebidas[3] == 1 && vetorDeSetasRecebidas[1] == 1)
 		{
-			bolaRecebida->velY = chuteBolaX * -5;
+			bolaRecebida->velY = chuteBolaX * -forcaDoChute;
 			bolaRecebida->velX = bolaRecebida->velY*-1;
 		}
 		else
 		{
-			bolaRecebida->velX = chuteBolaX * 5;
-			bolaRecebida->velY = chuteBolaY * 5;
+			bolaRecebida->velX = chuteBolaX * forcaDoChute;
+			bolaRecebida->velY = chuteBolaY * forcaDoChute;
 		}
 	}
 
@@ -1032,6 +1073,7 @@ int moveTime(int distanciaX, int distanciaY, jogador *timeRecebido, jogador *ret
 	{
 		for (i = 0; i < TAMANHODOTIME; i++)
 		{
+
 			posicionaJogador(timeRecebido[i].x + distanciaX, timeRecebido[i].y + distanciaY, timeRecebido[i], &timeRecebido[i]);
 		}
 

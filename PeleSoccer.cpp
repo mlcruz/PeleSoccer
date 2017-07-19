@@ -9,29 +9,25 @@
 //4º:Implementar 30 fps: 100%
 //5º:Verificar condicoes de pontuacao e vitoria: 100%
 //6º:Implemetnar goleiro:100%
-//7º:Leitura de arquivos com formacoes de jogadores
+//7º:Leitura de arquivos com formacoes de jogadores:100%
 //8º:Implementar controle do segundo time:100%
 //9º:Implementar tabela de high scores: 100%
 
-//--
-//Extra:
-//8º:Texturas
-//9º:Som
-//10º:Rescrever a funcão de desenho do jogador para permitir 3 angulos de chute(jogador "3x3" em 1 bloco)
-//11º:Customização dos jogadores(chute mais longo/mais rapido etc): 80%
-//12:º:Oponente controlado por computador
-//Provavelmente nunca:
-//??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
-//??:Implementar 2d isometrico
-
-
 int main()
 {
+
 	#pragma region Menu
 	char recebemenu = 0;
+	char recebemenu2 = 0;
+
 	int tempoDeJogo = 60;
 	char formacao[64];
+	char recorde[64];
 	char nomeDoJogador1[17], nomeDoJogador2[17];
+	int velocidadeGoleiro = 2;
+	int recebeValor = 0;
+	bool terminou = 0;
+	maiorDosPontos(recorde);
 	do
 	{
 		system("cls");
@@ -39,8 +35,60 @@ int main()
 		switch (recebemenu)
 		{
 		case '2':
-			//escreveArquivoDePontos(nome1, nome2, placarteste);
-			//getchar();
+			while (terminou == 0) {
+				system("cls");
+				printf("Opcoes - digite o numero para alterar, 0 para sair:\n\n1)Tamanho do gol(%i)", tamanhoEspacoGoleiro);
+				printf("\n2)Duracao do jogo em segundos(%i)", tempoDeJogo);
+				printf("\n3)Forca do chute na bola(%i)", forcaDoChute);
+				printf("\n4)Velocidade do jogo em frames por segundo(%i)", FRAMERATE);
+				printf("\n5)Velocidade da bola em relacao as jogadores[0=0%%,1=50%%,2=66%%,3=75%%,4=80%%..](%i)", limitadorDeVelocidadeBola);
+				printf("\n6)Velocidade de reacao do goleiro[1=100%%,2=50%%,3=33%%,4=25%%..](%i)", velocidadeGoleiro);
+				printf("\n7)Escala Da tela(Resolucao = ESCALA * (100x64)) (%i)", ESCALA);
+				recebemenu2 = getchar();
+				switch (recebemenu2)
+				{
+
+				case 1:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					tamanhoEspacoGoleiro = recebeValor;
+					break;
+				case 2:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					tempoDeJogo = recebeValor;
+					break;
+				case 3:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					forcaDoChute = recebeValor;
+					break;
+				case 4:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					FRAMERATE = recebeValor;
+					break;
+				case 5:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					limitadorDeVelocidadeBola = recebeValor;
+					break;
+				case 6:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					velocidadeGoleiro = recebeValor;
+					break;
+				case 7:
+					printf("Digite o valor desejado:");
+					scanf("%i", &recebeValor);
+					ESCALA = recebeValor;
+					break;
+				case 0:
+					terminou = 1;
+					break;
+				}
+			}
+			getchar();
 			break;
 		case '3':	
 			leArquivoDePontos();
@@ -68,13 +116,17 @@ int main()
 	
 	#pragma region Inicializa Variaveis
 
-
+	//Cria o espaco do goleiro
+	//if (i > metade-espacogoleiro && i < 37)
+	
 
 	//Guarda quais teclas de movimento foram pressionadas pra movimentacao em diagonal
 	//0 direita(X+), 1 esquerda(X-), 2 BAIXO(Y+), 3 cima(Y-);
 	bool vetorDeSetas[4] = { 0,0,0,0 };
 	bool vetorDeSetas2[4] = { 0,0,0,0 };
 	
+	//Gerencia campo de visao melhor
+	int fixadorDeVisao = 0;
 	//A tela recebeu um comando de limpesa?
 	int limpoRecentemente = 0;
 
@@ -265,9 +317,20 @@ int main()
 			vetorDeSetas[2] = 1;
 
 			//Movimenta o time especificado
-			if (!moveTime(0, 1, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas) && fimDoCampoDeVisao < 100)
+			if (!moveTime(0, 1, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas) && fimDoCampoDeVisao < 101)
 			{
-				inicioDoCampoDeVisao++;
+				if (fimDoCampoDeVisao == 100)
+				{
+					fixadorDeVisao = 15;
+				}
+				if (fixadorDeVisao < 1)
+				{
+					inicioDoCampoDeVisao++;
+				}
+				else 
+				{
+					fixadorDeVisao--;
+				}
 			}
 
 		}
@@ -277,9 +340,22 @@ int main()
 			vetorDeSetas[3] = 1;
 
 			//Muda a posicao do time, checa colisoes e atualiza campo de visao
-			if (!moveTime(0, -1, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas) &&inicioDoCampoDeVisao > 0)
+			if (!moveTime(0, -1, time1, time1, limiteT1, &bolaPadrao, vetorDeSetas) &&inicioDoCampoDeVisao > -1)
 			{
-				inicioDoCampoDeVisao--;
+				
+				if (inicioDoCampoDeVisao == 0 )
+				{
+					fixadorDeVisao = 15;
+				}
+				if (fixadorDeVisao < 1)
+				{
+					inicioDoCampoDeVisao--;
+				}
+				else
+				{
+					fixadorDeVisao--;
+				}
+				
 			}
 			
 		}
@@ -336,15 +412,13 @@ int main()
 
 		#pragma region Atualizacoes
 		//Atualiza valores do jogo
-		if ((contadordeframes % limitadorDeVelocidadeBola)!=1)
+		if ((contadordeframes % limitadorDeVelocidadeBola) !=1)
 		{
 			limpoRecentemente = atualizaBola(&bolaPadrao);
-			
-
 		}
 
 		//Velocidade do goleiro
-		if ((contadordeframes % 2) == 1)
+		if ((contadordeframes % velocidadeGoleiro) == 1)
 		{
 			atualizaGoleiro(goleiro1, &goleiro1);
 			atualizaGoleiro(goleiro2, &goleiro2);
@@ -399,11 +473,12 @@ int main()
 		tempoDeJogo = ((relogioAtual = clock()) - relogioInicial) / 1000;
 		printf("Relogio: %i\nFaltam: %i segundos para o fim do jogo\n", tempoDeJogo,tempoMaxDeJogo-tempoDeJogo);
 		printf("Time Azul(%s) %i - %i Time Vermelho(%s)\n",nomeDoJogador2, placar[1], placar[0],nomeDoJogador1);
+		printf("Recorde:%s", recorde);
 		if (tempoMaxDeJogo - tempoDeJogo < 0)
 		{
 			if (placar[0] == placar[1])
 			{
-				printf("FIM DE JOGO!\nEMPATE!\n");
+				printf("\nFIM DE JOGO!\nEMPATE!\n");
 				escreveArquivoDePontos(nomeDoJogador1, nomeDoJogador2, placar);
 			}
 
