@@ -43,47 +43,48 @@ int main()
 				printf("\n4)Velocidade do jogo em frames por segundo(%i)", FRAMERATE);
 				printf("\n5)Velocidade da bola em relacao as jogadores[0=0%%,1=50%%,2=66%%,3=75%%,4=80%%..](%i)", limitadorDeVelocidadeBola);
 				printf("\n6)Velocidade de reacao do goleiro[1=100%%,2=50%%,3=33%%,4=25%%..](%i)", velocidadeGoleiro);
-				printf("\n7)Escala Da tela(Resolucao = ESCALA * (100x64)) (%i)", ESCALA);
+				printf("\n7)Escala Da tela(Resolucao = ESCALA * (100x64)) (%i)\n\n", ESCALA);
 				recebemenu2 = getchar();
+			
 				switch (recebemenu2)
 				{
 
-				case 1:
+				case '1':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					tamanhoEspacoGoleiro = recebeValor;
 					break;
-				case 2:
+				case '2':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					tempoDeJogo = recebeValor;
 					break;
-				case 3:
+				case '3':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					forcaDoChute = recebeValor;
 					break;
-				case 4:
+				case '4':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					FRAMERATE = recebeValor;
 					break;
-				case 5:
+				case '5':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					limitadorDeVelocidadeBola = recebeValor;
 					break;
-				case 6:
+				case '6':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					velocidadeGoleiro = recebeValor;
 					break;
-				case 7:
+				case '7':
 					printf("Digite o valor desejado:");
 					scanf("%i", &recebeValor);
 					ESCALA = recebeValor;
 					break;
-				case 0:
+				case '0':
 					terminou = 1;
 					break;
 				}
@@ -184,7 +185,7 @@ int main()
 
 	double tempoCorrido;
 	//Variaveis para os relogios
-	clock_t relogioInicial = clock(), relogioAtual;
+	clock_t relogioInicial, relogioAtual;
 	
 	//Tempo limite da partida em segundos
 	//Define versão do opengl para 3+
@@ -272,10 +273,11 @@ int main()
 //	unsigned long int rawTime = glfwGetTimerValue();
 
 #pragma endregion
-
+	relogioInicial = clock();
 	#pragma region Loop Principal do jogo
 
 	//Enquanto a janela não fecha
+
 	while (!glfwWindowShouldClose(janela)) 
 	{
 		
@@ -462,18 +464,10 @@ int main()
 		#pragma region Forca framerate
 		contadordeframes++;
 		system("@cls||clear");
-		tempoCorrido = glfwGetTime();
-		if (((1.0 / (double)FRAMERATE) - tempoCorrido) > 0)
-		{
-			
-			Sleep((DWORD)(1.0 / (double)FRAMERATE - tempoCorrido)*1000);
-		}
-		printf("Framerate fixada: %.2lf\n", 1 / glfwGetTime());
-		printf("Framerate original: %.2lf\n", 1 / tempoCorrido);
 		tempoDeJogo = ((relogioAtual = clock()) - relogioInicial) / 1000;
 		printf("Relogio: %i\nFaltam: %i segundos para o fim do jogo\n", tempoDeJogo,tempoMaxDeJogo-tempoDeJogo);
 		printf("Time Azul(%s) %i - %i Time Vermelho(%s)\n",nomeDoJogador2, placar[1], placar[0],nomeDoJogador1);
-		printf("Recorde:%s", recorde);
+		printf("Recorde:%s\n", recorde);
 		if (tempoMaxDeJogo - tempoDeJogo < 0)
 		{
 			if (placar[0] == placar[1])
@@ -500,6 +494,16 @@ int main()
 			glfwSetWindowShouldClose(janela, true);
 
 		}
+		
+		tempoCorrido = glfwGetTime();
+		if ((1.0/(double)FRAMERATE - tempoCorrido) > 0)
+		{
+
+			//Sleep((DWORD)(1.0 / (double)10 - tempoCorrido) * 1000);
+			Sleep((1.0 / (double)FRAMERATE - tempoCorrido)*1000);
+		}
+		printf("Framerate fixada: %.2lf\n", 1 / glfwGetTime());
+		printf("Framerate original: %.2lf\n", 1 / tempoCorrido);
 
 #pragma endregion		 
 		

@@ -4,7 +4,6 @@
 #define CAMPODEVISAO 50//Campo de visao do jogador
 
 //#define TAMANHODOTIME 4//Tamanho maximo de cada time
-//#define FRAMERATE 30 //Define FPS
 
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
 #include <GLFW/glfw3.h> //GLFW para renderizar a janela
@@ -28,7 +27,9 @@ const float PASSOY = 0.02f*PROPORCAO;//Tamanho minimo de um passo no Y do plano
 int TAMANHODOTIME = 4;
 int tamanhoEspacoGoleiro = 10;
 int forcaDoChute = 5;
-int FRAMERATE = 30;
+int FRAMERATE = 20;
+
+
 int ESCALA = 8;
 //Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
 int vetorDeDadosInicial[TERMINALCOLUNAS][TERMINALLINHAS];
