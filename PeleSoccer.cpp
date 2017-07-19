@@ -42,8 +42,7 @@ int main()
 			//escreveArquivoDePontos(nome1, nome2, placarteste);
 			//getchar();
 			break;
-		case '3':
-			
+		case '3':	
 			leArquivoDePontos();
 			getchar();
 			break;
@@ -52,8 +51,6 @@ int main()
 			return 0;
 			break;
 		}
-
-
 
 	} while ((recebemenu = getc(stdin)) != '1');
 
@@ -109,26 +106,18 @@ int main()
 	zeraTela(vetorDeDadosRecebido);
 	zeraTela(vetorDeDadosInicial);
 
-
 	//Inicializa a bola nas coredenadas especificadas;
 	bola bolaPadrao = inicializaBola(32, 49,0,0);
-
-	jogador *time2 = leFormacao(formacao,2);
-	
-	jogador *time1 = leFormacao(formacao, 1);
 	
 	//Cria time 1:
+	jogador *time1 = leFormacao(formacao, 1);
 	
+	//Cria time 2:
+	jogador *time2 = leFormacao(formacao, 2);
 
-
-	
-	
 	//Goleiros
 	jogador goleiro1 = inicializaJogador(32, 98, 2);
 	jogador goleiro2 = inicializaJogador(32, 1, 1);
-
-
-
 
 	//Lista de todas as VAOs usadas no programa
 	GLint listaDeEnderecosVAO[NUMVAO];

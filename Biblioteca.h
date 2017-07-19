@@ -282,7 +282,6 @@ jogador *leFormacao(char nome[64], int time)
 	return timeRecebido;
 }
 
-
 void leArquivoDePontos()
 {
 	struct bufferDePontos
@@ -296,18 +295,20 @@ void leArquivoDePontos()
 
 	bufferDePontos bufTemp;
 	FILE *lido;
+	int contador = 1;
 	if ((lido = fopen("pontos.bin", "rb")) != NULL)
 	{
 
 		while (!feof(lido))
 		{
 			fread(&bufTemp, sizeof(bufTemp), 1, lido);
-			printf("\n%i\n%i\n%s\n%s\n", bufTemp.pontos1, bufTemp.pontos2, bufTemp.nome1, bufTemp.nome2);
+			printf("Posicao numero %i -- [", contador);
+			printf("%i a %i - %s vs %s]\n", bufTemp.pontos1, bufTemp.pontos2, bufTemp.nome1, bufTemp.nome2);
+			contador++;
 		}
 	}
 }
-	
-	
+		
 void escreveArquivoDePontos(char *nomeDoJogador1,char *nomeDoJogador2, int placarFinal[2])
 {
 	struct bufferDePontos
@@ -402,6 +403,7 @@ void escreveArquivoDePontos(char *nomeDoJogador1,char *nomeDoJogador2, int placa
 	}
 	
 }
+
 void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado)
 {
 	//Se o goleiro está no gol e pode ir para direita
