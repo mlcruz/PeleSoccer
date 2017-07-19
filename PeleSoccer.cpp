@@ -39,10 +39,6 @@ int main()
 		switch (recebemenu)
 		{
 		case '2':
-			fputs("Insira nome de formacao:",stdout);
-			scanf("%s", &formacao);
-			
-			
 			//escreveArquivoDePontos(nome1, nome2, placarteste);
 			//getchar();
 			break;
@@ -67,6 +63,9 @@ int main()
 	fputs("Nome do jogador nº 2:", stdout);
 	scanf("%s", nomeDoJogador2);
 
+	fputs("local do arquivo de formacao:", stdout);
+	scanf("%s", &formacao);
+	
 
 #pragma endregion
 	
@@ -114,14 +113,16 @@ int main()
 	//Inicializa a bola nas coredenadas especificadas;
 	bola bolaPadrao = inicializaBola(32, 49,0,0);
 
+	jogador *time2 = leFormacao(formacao,2);
+	
+	jogador *time1 = leFormacao(formacao, 1);
+	
 	//Cria time 1:
-	jogador Carlos = inicializaJogador(26, 40, 1), Jorge = inicializaJogador(32, 48, 1), Marcos = inicializaJogador(38, 40, 1),lugo = inicializaJogador(38,36,1);
-	jogador time1[TAMANHODOTIME] = { Carlos,Jorge,Marcos,lugo};
+	
 
-	//Cria time 2:
-	jogador Joao = inicializaJogador(26, 60, 2), Pedro = inicializaJogador(32, 50, 2), Lopes = inicializaJogador(38, 60, 2), Lopeso = inicializaJogador(33, 60, 2);
-	jogador time2[TAMANHODOTIME] = {Joao,Pedro,Lopes,Lopeso};
 
+	
+	
 	//Goleiros
 	jogador goleiro1 = inicializaJogador(32, 98, 2);
 	jogador goleiro2 = inicializaJogador(32, 1, 1);
@@ -343,6 +344,7 @@ int main()
 		}
 		
 #pragma endregion
+
 		#pragma region Atualizacoes
 		//Atualiza valores do jogo
 		if ((contadordeframes % limitadorDeVelocidadeBola)!=1)

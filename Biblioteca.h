@@ -12,7 +12,7 @@
 #include <Windows.h>
 #include <string.h>
 #include <time.h>
-
+#include <stdlib.h>
 
 //Bibliotecas para operacoes com matrizes
 #include <glm\glm.hpp> 
@@ -112,32 +112,9 @@ void escreveArquivoDePontos(char *nomeDoJogador1, char *nomeDoJogador2, int plac
 
 void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado);
 
-int leFormacao(char nome[64])
-{
-	FILE *arquivoDeFormacao;
-	int i=0,c = 0;
-	int tamanhoDoTime = 0;
-	//Le o arquivo de formacao
-	arquivoDeFormacao = fopen(nome, "r");
-	if (arquivoDeFormacao != NULL)
-	{
-		//30 linhas no arquivo de formação
-		for (c = 0; c < 30; c++)
-		{
-			//60+1 colunas
-			for (i = 0; i < 61; i++)
-			{
-				if (getc(arquivoDeFormacao) == 'X')
-				{
-					//printf("jogador encontrado! %i", tamanhoDoTime);
-					tamanhoDoTime++;
-				}
-			}
-		}
-	}
-	return tamanhoDoTime;
-}
-
+//
+//Le a formacao, e retorna o vetor de criacao do time
+jogador *leFormacao(char nome[64],int time);
 
 //
 //Retorna um time para sua posicao inicial
@@ -237,6 +214,73 @@ int atualizaBola(bola *bolaRecebida);
 #pragma endregion
 
 #pragma region Funcoes
+
+
+jogador *leFormacao(char nome[64], int time)
+{
+	FILE *arquivoDeFormacao;
+	int i = 0, c = 0, contadorDeTime=0;
+	int tamanhoDoTime = 0;
+	//Le o arquivo de formacao para descobrir o tamanho do time
+	arquivoDeFormacao = fopen(nome, "r");
+	if (arquivoDeFormacao != NULL)
+	{
+		//30 linhas no arquivo de formação
+		for (c = 0; c < 30; c++)
+		{
+			//60+1 colunas
+			for (i = 0; i < 61; i++)
+			{
+				if (getc(arquivoDeFormacao) == 'X')
+				{
+					//printf("jogador encontrado! %i", tamanhoDoTime);
+					tamanhoDoTime++;
+
+				}
+			}
+		}
+	}
+	fclose(arquivoDeFormacao);
+	
+	TAMANHODOTIME = tamanhoDoTime;
+
+	//Cria o array de jogadores a ser alocado
+	jogador *timeRecebido;
+	timeRecebido = (jogador*)malloc(sizeof(jogador)*TAMANHODOTIME);
+
+	//Le o arquivo agora sabendo o numero de jogadores para preencher o vetor de time
+	arquivoDeFormacao = fopen(nome, "r");
+	if (arquivoDeFormacao != NULL)
+	{
+		//30 linhas no arquivo de formação
+		for (c = 0; c < 30; c++)
+		{
+			//60+1 colunas
+			for (i = 0; i < 61; i++)
+			{
+				if (getc(arquivoDeFormacao) == 'X')
+				{
+					//se for o time 1
+					if (time == 1)
+					{
+						//Reflete no eixo Y a partir do meio de campo
+						timeRecebido[contadorDeTime] = inicializaJogador(i+3, 48 - c, time);
+					}
+					if (time == 2)
+					{
+						//Reflete no eixo Y a partir do meio de campo
+						timeRecebido[contadorDeTime] = inicializaJogador(i + 3, 50 + c, time);
+					}
+
+					
+					contadorDeTime++;
+
+				}
+			}
+		}
+	}
+	return timeRecebido;
+}
 
 
 void leArquivoDePontos()
