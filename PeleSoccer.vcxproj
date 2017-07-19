@@ -148,6 +148,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Biblioteca.h" />
     <ClInclude Include="lib\include\compilaShader.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
