@@ -3,7 +3,7 @@
 #define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
 #define CAMPODEVISAO 50//Campo de visao do jogador
-#define TAMANHODOTIME 4//Tamanho maximo de cada time
+//#define TAMANHODOTIME 4//Tamanho maximo de cada time
 #define FRAMERATE 30 //Define FPS
 
 #include <glad/gl3w.h> //Versão minima e atualizada do GLEW
@@ -25,6 +25,7 @@
 const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
 const float PASSOX = 0.03125f; //tamanho minimo de um passo X no plano 
 const float PASSOY = 0.02f*PROPORCAO;//Tamanho minimo de um passo no Y do plano
+int TAMANHODOTIME = 4;
 
 //Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
 int vetorDeDadosInicial[TERMINALCOLUNAS][TERMINALLINHAS];
@@ -107,14 +108,40 @@ typedef struct bola
 void leArquivoDePontos();
 
 //Escreve dados no arquivo binario de pontuacao
-void escreveArquivoDePontos(char *nomeDoJogador, int placarFinal[2]);
+void escreveArquivoDePontos(char *nomeDoJogador1, char *nomeDoJogador2, int placarFinal[2]);
 
 void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado);
+
+int leFormacao(char nome[64])
+{
+	FILE *arquivoDeFormacao;
+	int i=0,c = 0;
+	int tamanhoDoTime = 0;
+	//Le o arquivo de formacao
+	arquivoDeFormacao = fopen(nome, "r");
+	if (arquivoDeFormacao != NULL)
+	{
+		//30 linhas no arquivo de formação
+		for (c = 0; c < 30; c++)
+		{
+			//60+1 colunas
+			for (i = 0; i < 61; i++)
+			{
+				if (getc(arquivoDeFormacao) == 'X')
+				{
+					//printf("jogador encontrado! %i", tamanhoDoTime);
+					tamanhoDoTime++;
+				}
+			}
+		}
+	}
+	return tamanhoDoTime;
+}
 
 
 //
 //Retorna um time para sua posicao inicial
-void limpaTime(jogador timeRecebido[TAMANHODOTIME]);
+void limpaTime(jogador *timeRecebido);
 
 //
 //Inicializa uma VAO só com EBO, precisa de info de atribs da vbo
@@ -196,13 +223,13 @@ void posicionaBola(bola *bolaRecebida, int x, int y);
 
 //
 //Move um time inteiro uma distancia X,Y especificada
-int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno, int fixador[8], bola *bolaRecebida, bool vetorDeSetas[4]);
+int moveTime(int distanciaX, int distanciaY, jogador *timeRecebido, jogador *retorno, int fixador[8], bola *bolaRecebida, bool vetorDeSetas[4]);
 
 
 //Mede os limites X e Y do time dado para fixar a formacao especificada. retorna uma lista de valores
 //encodada em decimal da seguinte forma: [ipppipppipppippp] onde i é o id(0 a 9) e p a posicao(0 a 999) dos valore
 //maxX,MinX,maxY,minY. Lembrando que qualquer valor pode então ser obtido a partidir de uma operação de modulo.
-void fixaTime(jogador timeRecebido[TAMANHODOTIME], int *retorno);
+void fixaTime(jogador *timeRecebido, int *retorno);
 
 //
 //Atualiza a posição da bola no loop do jogo a cada frame. Verifica colisoes e gerencia a velocidade da bola
@@ -297,7 +324,7 @@ void escreveArquivoDePontos(char *nomeDoJogador1,char *nomeDoJogador2, int placa
 					//Salva na ultima posição + 1(leitor logo antes do ultimo bit na 1º execucao
 					fseek(arquivoDePontos, 0, SEEK_CUR);
 					fwrite(&bufferRecebido,sizeof(bufferTemporario),1,arquivoDePontos);
-					printf("Pontuação SALVa em %i lugar", ftell(arquivoDePontos) / sizeof(bufferRecebido));
+					printf("Pontuacao salva em %i lugar", ftell(arquivoDePontos) / sizeof(bufferRecebido));
 					inseriu = 1;
 				}
 				
@@ -346,7 +373,7 @@ void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado)
 	}
 }
 
-void fixaTime(jogador timeRecebido[TAMANHODOTIME], int *retorno)
+void fixaTime(jogador *timeRecebido, int *retorno)
 {
 	int c;
 	int maiorX = 0, maiorY = 0, menorX = 180, menorY = 180;
@@ -857,7 +884,7 @@ void posicionaBola(bola *bolaRecebida, int x, int y)
 	}
 }
 
-int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME], jogador *retorno, int fixador[8], bola *bolaRecebida, bool vetorDeSetasRecebidas[4])
+int moveTime(int distanciaX, int distanciaY, jogador *timeRecebido, jogador *retorno, int fixador[8], bola *bolaRecebida, bool vetorDeSetasRecebidas[4])
 {
 	//Cria vetor de retorno
 	//	jogador timeDeRetorno[TAMANHODOTIME];
@@ -1066,7 +1093,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-void limpaTime(jogador timeRecebido[TAMANHODOTIME])
+void limpaTime(jogador *timeRecebido)
 {
 	int i;
 

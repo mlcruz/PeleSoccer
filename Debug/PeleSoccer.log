@@ -1,21 +1,35 @@
 ﻿  PeleSoccer.cpp
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(228): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(121): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(289): warning C4308: negative integral constant converted to unsigned type
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(289): warning C4307: '*': integral constant overflow
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(310): warning C4308: negative integral constant converted to unsigned type
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(310): warning C4307: '*': integral constant overflow
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(325): warning C4308: negative integral constant converted to unsigned type
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(325): warning C4307: '*': integral constant overflow
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(258): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(255): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(316): warning C4308: negative integral constant converted to unsigned type
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(316): warning C4307: '*': integral constant overflow
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(337): warning C4308: negative integral constant converted to unsigned type
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(337): warning C4307: '*': integral constant overflow
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(352): warning C4308: negative integral constant converted to unsigned type
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(352): warning C4307: '*': integral constant overflow
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(285): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\string.h(346): note: see declaration of 'strncpy'
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(259): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(286): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\string.h(346): note: see declaration of 'strncpy'
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(270): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(297): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(276): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(303): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
-c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(279): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\biblioteca.h(306): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(205): note: see declaration of 'fopen'
-  PeleSoccer.vcxproj -> C:\Users\w8.1\documents\visual studio 2015\Projects\PeleSoccer\Debug\PeleSoccer.exe
-  PeleSoccer.vcxproj -> C:\Users\w8.1\documents\visual studio 2015\Projects\PeleSoccer\Debug\PeleSoccer.pdb (Full PDB)
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(119): error C2131: expression did not evaluate to a constant
+  c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(119): note: failure was caused by non-constant arguments or reference to a non-constant symbol
+  c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(119): note: see usage of 'TAMANHODOTIME'
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(119): error C2078: too many initializers
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(123): error C2131: expression did not evaluate to a constant
+  c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(123): note: failure was caused by non-constant arguments or reference to a non-constant symbol
+  c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(123): note: see usage of 'TAMANHODOTIME'
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(123): error C2078: too many initializers
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(43): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1270): note: see declaration of 'scanf'
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(65): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1270): note: see declaration of 'scanf'
+c:\users\w8.1\documents\visual studio 2015\projects\pelesoccer\pelesoccer\pelesoccer.cpp(68): warning C4996: 'scanf': This function or variable may be unsafe. Consider using scanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.10240.0\ucrt\stdio.h(1270): note: see declaration of 'scanf'

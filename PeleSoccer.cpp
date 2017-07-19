@@ -11,7 +11,8 @@
 //6º:Implemetnar goleiro:100%
 //7º:Leitura de arquivos com formacoes de jogadores
 //8º:Implementar controle do segundo time:100%
-//9º:Implementar tabela de high scores
+//9º:Implementar tabela de high scores: 100%
+
 //--
 //Extra:
 //8º:Texturas
@@ -28,6 +29,9 @@ int main()
 {
 	#pragma region Menu
 	char recebemenu = 0;
+	int tempoDeJogo = 60;
+	char formacao[64];
+	char nomeDoJogador1[17], nomeDoJogador2[17];
 	do
 	{
 		system("cls");
@@ -35,6 +39,9 @@ int main()
 		switch (recebemenu)
 		{
 		case '2':
+			fputs("Insira nome de formacao:",stdout);
+			scanf("%s", &formacao);
+			
 			
 			//escreveArquivoDePontos(nome1, nome2, placarteste);
 			//getchar();
@@ -53,9 +60,18 @@ int main()
 
 
 	} while ((recebemenu = getc(stdin)) != '1');
+
+	fputs("Nome do jogador nº 1:", stdout);
+	scanf("%s", nomeDoJogador1);
+
+	fputs("Nome do jogador nº 2:", stdout);
+	scanf("%s", nomeDoJogador2);
+
+
 #pragma endregion
 	
 	#pragma region Inicializa Variaveis
+
 
 
 	//Guarda quais teclas de movimento foram pressionadas pra movimentacao em diagonal
@@ -88,7 +104,6 @@ int main()
 	int i, j;
 	
 	//Tempo atual desde o inicio do jogo
-	int tempoDeJogo;
 
 	
 	//Inicializa vetor da tela
@@ -392,8 +407,33 @@ int main()
 		printf("Framerate original: %.2lf\n", 1 / tempoCorrido);
 		tempoDeJogo = ((relogioAtual = clock()) - relogioInicial) / 1000;
 		printf("Relogio: %i\nFaltam: %i segundos para o fim do jogo\n", tempoDeJogo,tempoMaxDeJogo-tempoDeJogo);
-		printf("Time Azul %i - %i Time Vermelho\n", placar[1], placar[0]);
-		
+		printf("Time Azul(%s) %i - %i Time Vermelho(%s)\n",nomeDoJogador2, placar[1], placar[0],nomeDoJogador1);
+		if (tempoMaxDeJogo - tempoDeJogo < 0)
+		{
+			if (placar[0] == placar[1])
+			{
+				printf("FIM DE JOGO!\nEMPATE!\n");
+				escreveArquivoDePontos(nomeDoJogador1, nomeDoJogador2, placar);
+			}
+
+			if (placar[0] > placar[1])
+			{
+				printf("FIM DE JOGO!\nVITORIA DE %s!\n",nomeDoJogador1);
+				escreveArquivoDePontos(nomeDoJogador1, nomeDoJogador2, placar);
+			}
+			if (placar[0] < placar[1])
+			{
+				printf("FIM DE JOGO!\nVITORIA DE %s!\n", nomeDoJogador2);
+				escreveArquivoDePontos(nomeDoJogador1, nomeDoJogador2, placar);
+			}
+			printf("\n Pressione x para sair\n");
+			while (getchar() != 'x')
+			{
+			}
+			
+			glfwSetWindowShouldClose(janela, true);
+
+		}
 
 #pragma endregion		 
 		
