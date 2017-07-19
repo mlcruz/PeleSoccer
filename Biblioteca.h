@@ -1,4 +1,4 @@
-#define TERMINALLINHAS  100
+#define TERMINALLINHAS  100 //Numero de linhas do terminal
 #define TERMINALCOLUNAS  64 //Tamanho do terminal
 #define ESCALA 8 //Escala da tela em relacao ao terminal
 #define NUMVAO 1 //Numero de vaos na lista de vao
@@ -26,14 +26,18 @@ const float PROPORCAO = TERMINALLINHAS / (float)CAMPODEVISAO;
 const float PASSOX = 0.03125f; //tamanho minimo de um passo X no plano 
 const float PASSOY = 0.02f*PROPORCAO;//Tamanho minimo de um passo no Y do plano
 
-									 //Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
+//Matriz que representa o estado inicial da tela, para guardar os elementos fixos.
 int vetorDeDadosInicial[TERMINALCOLUNAS][TERMINALLINHAS];
+
 //Matriz que representa a tela
 int vetorDeDadosRecebido[TERMINALCOLUNAS][TERMINALLINHAS];
+
 //Indica se um vetor foi recem desenhado ou não
 bool vetorDeDadosDesenhado[TERMINALCOLUNAS][TERMINALLINHAS];
+
 //Matriz com os dados do campo de visão atual
 int vetorDoCampoDeVisao[TERMINALCOLUNAS][CAMPODEVISAO];
+
 //Vetor que representa a posicao X,Y da bola na matriz
 int posBola[2];
 
@@ -90,9 +94,16 @@ typedef struct jogador
 //Estrutura que representa uma bola
 typedef struct bola
 {
+	//Pos x da bola
 	int x;
+
+	//Pos y da bola
 	int y;
+
+	//Velocidade no eixo X da bola
 	int velX;
+
+	//Velocidade no eixo Y da bola
 	int velY;
 } bola;
 #pragma endregion
