@@ -44,13 +44,6 @@ int posBola[2];
 //Placar do jogo, time1 eh [0], time2 eh [1]
 int placar[2];
 
-//Conta numero de frames até o momento
-int contadordeframes = 0;
-
-//Guarda quais teclas de movimento foram pressionadas pra movimentacao em diagonal
-//0 direita(X+), 1 esquerda(X-), 2 BAIXO(Y+), 3 cima(Y-);
-bool vetorDeSetas[4] = { 0,0,0,0 };
-bool vetorDeSetas2[4] = { 0,0,0,0 };
 
 //Limites do campo de visão
 int inicioDoCampoDeVisao = 30, fimDoCampoDeVisao = inicioDoCampoDeVisao + CAMPODEVISAO;
@@ -109,6 +102,12 @@ typedef struct bola
 #pragma endregion
 
 #pragma region Prototipos
+
+//Le o arquivo binario de pontuação e mostra na tela
+void leArquivoDePontos();
+
+//Escreve dados no arquivo binario de pontuacao
+void escreveArquivoDePontos(char *nomeDoJogador, int placarFinal[2]);
 
 void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado);
 
@@ -212,6 +211,126 @@ int atualizaBola(bola *bolaRecebida);
 
 #pragma region Funcoes
 
+
+void leArquivoDePontos()
+{
+	struct bufferDePontos
+	{
+		int pontos1;
+		int pontos2;
+
+		char nome1[17];
+		char nome2[17];
+	};
+
+	bufferDePontos bufTemp;
+	FILE *lido;
+	if ((lido = fopen("pontos.bin", "rb")) != NULL)
+	{
+
+		while (!feof(lido))
+		{
+			fread(&bufTemp, sizeof(bufTemp), 1, lido);
+			printf("\n%i\n%i\n%s\n%s\n", bufTemp.pontos1, bufTemp.pontos2, bufTemp.nome1, bufTemp.nome2);
+		}
+	}
+}
+	
+	
+void escreveArquivoDePontos(char *nomeDoJogador1,char *nomeDoJogador2, int placarFinal[2])
+{
+	struct bufferDePontos
+	{
+		int pontos1;
+		int pontos2;
+
+		char nome1[17];
+		char nome2[17];
+	};
+
+	
+	bufferDePontos bufferTemporario,bufferRecebido;
+	FILE *arquivoDePontos;
+	
+	int inseriu = 0;
+
+	//Trunca strings pro tamanho maximo permitido e passa pro buffer
+	strncpy(bufferRecebido.nome1, nomeDoJogador1, 17);
+	strncpy(bufferRecebido.nome2, nomeDoJogador2, 17);
+
+	//Substitui /n por /0
+	bufferRecebido.nome1[strlen(bufferRecebido.nome1) -1] = '\0';
+	bufferRecebido.nome2[strlen(bufferRecebido.nome2) - 1] = '\0';
+
+	//Prenche pontuçao dos times
+	bufferRecebido.pontos1 = placarFinal[0];
+	bufferRecebido.pontos2 = placarFinal[1];
+	
+	//Ve se arquivo existe
+	if ((arquivoDePontos = fopen("pontos.bin", "rb")) != NULL)
+	{
+		fclose(arquivoDePontos);
+	}
+	else
+	{	//Se não existe, cria vazio
+		fclose(fopen("pontos.bin", "wb"));
+	}
+	
+	if ((arquivoDePontos = fopen("pontos.bin", "r+b")) != NULL)
+	{
+		//Limpa leitor
+		rewind(arquivoDePontos);
+		//Coloca leitor de arquivos no fim do arquivo
+		fseek(arquivoDePontos, 0,SEEK_END);
+		//Enquant não chega ao fim do arquivo
+		while (!feof(arquivoDePontos) && inseriu == 0)
+		{
+			//Coloca o leitor na posição anterior a estutura no arquivo 
+			fseek(arquivoDePontos, -1 * sizeof(bufferTemporario), SEEK_CUR);
+
+			//Le  o buffer na posição do leitor(cancela a operação anterior. posição lida = ultimo-i
+			if (fread(&bufferTemporario, sizeof(bufferTemporario), 1, arquivoDePontos) != 0)
+			{
+				//Se o valor recebido é menor que o valor na posição do leitor(valor sendo a diferença entre os pontos)
+				if (abs(bufferTemporario.pontos1 - bufferTemporario.pontos2) >= abs(placarFinal[0] - placarFinal[1]))
+				{
+					//Salva na ultima posição + 1(leitor logo antes do ultimo bit na 1º execucao
+					fseek(arquivoDePontos, 0, SEEK_CUR);
+					fwrite(&bufferRecebido,sizeof(bufferTemporario),1,arquivoDePontos);
+					printf("Pontuação SALVa em %i lugar", ftell(arquivoDePontos) / sizeof(bufferRecebido));
+					inseriu = 1;
+				}
+				
+				//Caso não
+				else
+				{
+					//Salva na posição logo depois da posição antiga no arquivo(desce 1)
+					fwrite(&bufferTemporario, sizeof(bufferTemporario), 1, arquivoDePontos);
+					//Coloca leitor na posição do inicio da estrutura anterior a que foi lida(leitor posicionado na frente de um espaco vazio)
+					fseek(arquivoDePontos, -2 * sizeof(bufferRecebido), SEEK_CUR);
+					//Se chegou no inicio do arquivo
+					if (ftell(arquivoDePontos) == 0)
+					{
+						printf("Parabens! Novo recorde!");
+						fseek(arquivoDePontos, 0, SEEK_CUR);
+						fwrite(&bufferRecebido, sizeof(bufferRecebido, 1), 1, arquivoDePontos);
+						inseriu = 1;
+					}
+				}
+			}
+			else if (inseriu == 0)
+			{
+
+				printf("Parabens! Novo recorde!");
+				fseek(arquivoDePontos, -1 * sizeof(bufferRecebido), SEEK_CUR);
+				fwrite(&bufferRecebido, sizeof(bufferRecebido), 1, arquivoDePontos);
+				inseriu = 1;
+			}
+		}
+		fclose(arquivoDePontos);
+	}
+	
+}
 void atualizaGoleiro(jogador goleiroRecebido, jogador *goleiroRetornado)
 {
 	//Se o goleiro está no gol e pode ir para direita
@@ -799,7 +918,7 @@ int moveTime(int distanciaX, int distanciaY, jogador timeRecebido[TAMANHODOTIME]
 	{
 		//Só vai detectar a diagonal durante o pressionamento das setas de esquerda ou direita, já que o flag
 		//da tecla cima estar pressionada antecede a mesma, logo a velocidade Y é sempre a que é complementada
-		vetorDeSetas;
+		
 
 		//detecta se a tecla pra baixo e esquerda foram pressonadas ao mesmo tempo
 		if (vetorDeSetasRecebidas[2] == 1 && vetorDeSetasRecebidas[1] == 1)

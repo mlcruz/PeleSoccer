@@ -24,12 +24,44 @@
 //??:Implementar 2d isometrico
 
 
-
 int main()
 {
+	#pragma region Menu
+	char recebemenu = 0;
+	do
+	{
+		system("cls");
+		printf("1-Jogar\n2-Opcoes\n3-Highscores\n4-Sair\n");
+		switch (recebemenu)
+		{
+		case '2':
+			
+			//escreveArquivoDePontos(nome1, nome2, placarteste);
+			//getchar();
+			break;
+		case '3':
+			
+			leArquivoDePontos();
+			getchar();
+			break;
+		case '4':
+			//Unico ponto de retorno da função, sai do jogo
+			return 0;
+			break;
+		}
+
+
+
+	} while ((recebemenu = getc(stdin)) != '1');
+#pragma endregion
 	
 	#pragma region Inicializa Variaveis
 
+
+	//Guarda quais teclas de movimento foram pressionadas pra movimentacao em diagonal
+	//0 direita(X+), 1 esquerda(X-), 2 BAIXO(Y+), 3 cima(Y-);
+	bool vetorDeSetas[4] = { 0,0,0,0 };
+	bool vetorDeSetas2[4] = { 0,0,0,0 };
 	
 	//A tela recebeu um comando de limpesa?
 	int limpoRecentemente = 0;
@@ -39,6 +71,9 @@ int main()
 
 	//Duracao da partida
 	int tempoMaxDeJogo = 60;
+
+	//Conta numero de frames até o momento
+	int contadordeframes = 0;
 
 	//Tamanho da janela em pixels, de acordo com o numero de colunas
 	int tamanhoDaLarguraJanela = TERMINALCOLUNAS*ESCALA;
