@@ -1,4 +1,4 @@
-//LISTA DE COISAS A FAZER:
+//LISTA DE COISAS A FAZER(Completo):
 //Basico:
 //--
 //1º:Estrutura pra representar e inicializar jogadores e bola:100% 
