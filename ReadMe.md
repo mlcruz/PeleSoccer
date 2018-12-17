@@ -3,6 +3,13 @@ Very simple 2d drawing engine in openGL. Implements a very simple atari game, in
 
 ![Game screen](https://raw.githubusercontent.com/mlcruz/PeleSoccer/master/Sem_campo_de_visao.png)
 
+
+
+
+
+![File structure](https://raw.githubusercontent.com/mlcruz/SimpleGraphNoSQL/master/folders.png)
+
+
 //LISTA DE COISAS A FAZER(Completo):
 //Basico:
 //--
