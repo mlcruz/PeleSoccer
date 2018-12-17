@@ -27,11 +27,19 @@ Very simple 2d drawing engine in openGL. Implements a very simple atari game, in
 
 //--
 //Extra:
+
 //8º:Texturas
+
 //9º:Som
+
 //10º:Rescrever a funcão de desenho do jogador para permitir 3 angulos de chute(jogador "3x3" em 1 bloco)
+
 //11º:Customização dos jogadores(chute mais longo/mais rapido etc)
+
 //12:º:Oponente controlado por computador
+
 //Provavelmente nunca:
+
 //??:Otimizar eficiencia do loop de desenho(não tem pq desenhar todos os 0s)
+
 //??:Implementar 2d isometrico
