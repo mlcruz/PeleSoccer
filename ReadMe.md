@@ -4,16 +4,27 @@ Very simple 2d drawing engine in openGL. Implements a very simple atari game, in
 ![Game screen](https://raw.githubusercontent.com/mlcruz/PeleSoccer/master/Sem_campo_de_visao.png)
 
 //LISTA DE COISAS A FAZER(Completo):
+
 //Basico:
+
 //--
+
 //1º:Estrutura pra representar e inicializar jogadores e bola:100% 
+
 //2ºFuncoes para movimentacao de jogadores e time:90%
+
 //3º:Interacao entre jogadores e a bola
+
 //4º:Implementar 60 fps
+
 //5º:Logica de jogo, verificar condicoes de pontuacao e vitoria
+
 //6º:Leitura de arquivos com formacoes de jogadores
+
 //7º:Implementar controle do segundo time(facil)
+
 //8º:Implementar tabela de high scores
+
 //--
 //Extra:
 //8º:Texturas
