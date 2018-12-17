@@ -1,4 +1,4 @@
-Very simple 2d drawing engine in openGL. Implements a very simple atari game.
+Very simple 2d drawing engine in openGL. Implements a very simple atari game, including scroling screen and colision detection.
 
 //LISTA DE COISAS A FAZER(Completo):
 //Basico:
