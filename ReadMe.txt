@@ -1,3 +1,5 @@
+Very simple 2d drawing engine in openGL. Implements a very simple atari game.
+
 //LISTA DE COISAS A FAZER(Completo):
 //Basico:
 //--
